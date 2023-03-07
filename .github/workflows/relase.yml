@@ -23,8 +23,8 @@ jobs:
         with:
           go-version: '>=1.20.0'
 
-      - name: Build Admin dashboard UI
-        run: npm i --prefix=./template --package-lock-only && npm --prefix=./template run build
+      - name: Build Dashboard
+        run: npm --prefix=./template ci && npm --prefix=./template run build
 
       # The prebuilt golangci-lint doesn't support go 1.18+ yet
       # https://github.com/golangci/golangci-lint/issues/2649
