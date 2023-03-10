@@ -1616,6 +1616,56 @@ var (
 			}
 		},
 	}
+	// UserOrderFieldName orders User by name.
+	UserOrderFieldName = &UserOrderField{
+		field: user.FieldName,
+		toCursor: func(u *User) Cursor {
+			return Cursor{
+				ID:    u.ID,
+				Value: u.Name,
+			}
+		},
+	}
+	// UserOrderFieldEmail orders User by email.
+	UserOrderFieldEmail = &UserOrderField{
+		field: user.FieldEmail,
+		toCursor: func(u *User) Cursor {
+			return Cursor{
+				ID:    u.ID,
+				Value: u.Email,
+			}
+		},
+	}
+	// UserOrderFieldRole orders User by role.
+	UserOrderFieldRole = &UserOrderField{
+		field: user.FieldRole,
+		toCursor: func(u *User) Cursor {
+			return Cursor{
+				ID:    u.ID,
+				Value: u.Role,
+			}
+		},
+	}
+	// UserOrderFieldToken orders User by token.
+	UserOrderFieldToken = &UserOrderField{
+		field: user.FieldToken,
+		toCursor: func(u *User) Cursor {
+			return Cursor{
+				ID:    u.ID,
+				Value: u.Token,
+			}
+		},
+	}
+	// UserOrderFieldTokenExpired orders User by token_expired.
+	UserOrderFieldTokenExpired = &UserOrderField{
+		field: user.FieldTokenExpired,
+		toCursor: func(u *User) Cursor {
+			return Cursor{
+				ID:    u.ID,
+				Value: u.TokenExpired,
+			}
+		},
+	}
 )
 
 // String implement fmt.Stringer interface.
@@ -1626,6 +1676,16 @@ func (f UserOrderField) String() string {
 		str = "UPDATED_AT"
 	case user.FieldCreatedAt:
 		str = "CREATED_AT"
+	case user.FieldName:
+		str = "NAME"
+	case user.FieldEmail:
+		str = "EMAIL"
+	case user.FieldRole:
+		str = "ROLE"
+	case user.FieldToken:
+		str = "TOKEN"
+	case user.FieldTokenExpired:
+		str = "TOKEN_EXPIRED"
 	}
 	return str
 }
@@ -1646,6 +1706,16 @@ func (f *UserOrderField) UnmarshalGQL(v interface{}) error {
 		*f = *UserOrderFieldUpdatedAt
 	case "CREATED_AT":
 		*f = *UserOrderFieldCreatedAt
+	case "NAME":
+		*f = *UserOrderFieldName
+	case "EMAIL":
+		*f = *UserOrderFieldEmail
+	case "ROLE":
+		*f = *UserOrderFieldRole
+	case "TOKEN":
+		*f = *UserOrderFieldToken
+	case "TOKEN_EXPIRED":
+		*f = *UserOrderFieldTokenExpired
 	default:
 		return fmt.Errorf("%s is not a valid UserOrderField", str)
 	}
