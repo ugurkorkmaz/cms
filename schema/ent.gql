@@ -1,0 +1,150 @@
+directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+type Article implements Node {
+  """The unique identifier of the entity."""
+  id: ID!
+  """The time when the entity was updated."""
+  updatedAt: Time!
+  """The time when the entity was created."""
+  createdAt: Time!
+}
+"""Ordering options for Article connections"""
+input ArticleOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Articles."""
+  field: ArticleOrderField!
+}
+"""Properties by which Article connections can be ordered."""
+enum ArticleOrderField {
+  UPDATED_AT
+  CREATED_AT
+}
+type Comment implements Node {
+  """The unique identifier of the entity."""
+  id: ID!
+  """The time when the entity was updated."""
+  updatedAt: Time!
+  """The time when the entity was created."""
+  createdAt: Time!
+}
+"""Ordering options for Comment connections"""
+input CommentOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Comments."""
+  field: CommentOrderField!
+}
+"""Properties by which Comment connections can be ordered."""
+enum CommentOrderField {
+  UPDATED_AT
+  CREATED_AT
+}
+"""
+Define a Relay Cursor type:
+https://relay.dev/graphql/connections.htm#sec-Cursor
+"""
+scalar Cursor
+type Meta implements Node {
+  """The unique identifier of the entity."""
+  id: ID!
+  """The time when the entity was updated."""
+  updatedAt: Time!
+  """The time when the entity was created."""
+  createdAt: Time!
+}
+"""Ordering options for Meta connections"""
+input MetaOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order MetaSlice."""
+  field: MetaOrderField!
+}
+"""Properties by which Meta connections can be ordered."""
+enum MetaOrderField {
+  UPDATED_AT
+  CREATED_AT
+}
+type Newsletter implements Node {
+  """The unique identifier of the entity."""
+  id: ID!
+  """The time when the entity was updated."""
+  updatedAt: Time!
+  """The time when the entity was created."""
+  createdAt: Time!
+}
+"""Ordering options for Newsletter connections"""
+input NewsletterOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Newsletters."""
+  field: NewsletterOrderField!
+}
+"""Properties by which Newsletter connections can be ordered."""
+enum NewsletterOrderField {
+  UPDATED_AT
+  CREATED_AT
+}
+"""
+An object with an ID.
+Follows the [Relay Global Object Identification Specification](https://relay.dev/graphql/objectidentification.htm)
+"""
+interface Node @goModel(model: "app/ent.Noder") {
+  """The id of the object."""
+  id: ID!
+}
+"""Possible directions in which to order a list of items when provided an `orderBy` argument."""
+enum OrderDirection {
+  """Specifies an ascending order for a given `orderBy` argument."""
+  ASC
+  """Specifies a descending order for a given `orderBy` argument."""
+  DESC
+}
+"""
+Information about pagination in a connection.
+https://relay.dev/graphql/connections.htm#sec-undefined.PageInfo
+"""
+type PageInfo {
+  """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+  """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+  """When paginating backwards, the cursor to continue."""
+  startCursor: Cursor
+  """When paginating forwards, the cursor to continue."""
+  endCursor: Cursor
+}
+type Query {
+  """Fetches an object given its ID."""
+  node(
+    """ID of the object."""
+    id: ID!
+  ): Node
+  """Lookup nodes by a list of IDs."""
+  nodes(
+    """The list of node IDs."""
+    ids: [ID!]!
+  ): [Node]!
+}
+"""The builtin Time type"""
+scalar Time
+type User implements Node {
+  """The unique identifier of the entity."""
+  id: ID!
+  """The time when the entity was updated."""
+  updatedAt: Time!
+  """The time when the entity was created."""
+  createdAt: Time!
+}
+"""Ordering options for User connections"""
+input UserOrder {
+  """The ordering direction."""
+  direction: OrderDirection! = ASC
+  """The field by which to order Users."""
+  field: UserOrderField!
+}
+"""Properties by which User connections can be ordered."""
+enum UserOrderField {
+  UPDATED_AT
+  CREATED_AT
+}
