@@ -27,21 +27,22 @@ func main() {
 
 	http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
-	http.HandleFunc("/", SPA)
+	http.HandleFunc("/", serveSPA)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
-func SPA(w http.ResponseWriter, r *http.Request) {
+func serveSPA(w http.ResponseWriter, r *http.Request) {
 	buildPath := "dist"
-	f, err := template.UI.Open(filepath.Join(buildPath, r.URL.Path))
+	f, err := template.Dist.Open(filepath.Join(buildPath, r.URL.Path))
 	if os.IsNotExist(err) {
-		index, err := template.UI.ReadFile(filepath.Join(buildPath, "index.html"))
+		index, err := template.Dist.ReadFile(filepath.Join(buildPath, "index.html"))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		w.WriteHeader(http.StatusAccepted)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Write(index)
 		return
 	} else if err != nil {
@@ -49,5 +50,5 @@ func SPA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer f.Close()
-	http.FileServer(template.Dist()).ServeHTTP(w, r)
+	http.FileServer(template.SPA()).ServeHTTP(w, r)
 }
