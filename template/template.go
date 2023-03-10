@@ -8,10 +8,10 @@ import (
 )
 
 //go:embed all:dist
-var UI embed.FS
+var Dist embed.FS
 
-func Dist() http.FileSystem {
-	distSub, err := fs.Sub(UI, "dist")
+func SPA() http.FileSystem {
+	distSub, err := fs.Sub(Dist, "dist")
 	if err != nil {
 		log.Fatal(err)
 	}

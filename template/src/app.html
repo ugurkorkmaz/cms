@@ -1,13 +1,37 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="cupcake">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-		<meta name="viewport" content="width=device-width" />
-		<title>CMS</title>
-		%sveltekit.head%
-	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
-	</body>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+    <meta name="viewport" content="width=device-width" />
+    <title>CMS</title>
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover" class="w-full h-full">
+    <div style="display: contents">%sveltekit.body%</div>
+
+    <script>
+      const setCookie = (name, value, expiryDays) => {
+        const d = new Date();
+        d.setTime(d.getTime() + (expiryDays ?? 30 * 24 * 60 * 60 * 1000));
+        const expires = `expires=${d.toUTCString()}`;
+        document.cookie = `${name}=${value}; ${expires}; path=/`;
+      };
+
+      const getCookie = (name) => {
+        const cookies = document.cookie.split("; ");
+        for (const cookie of cookies) {
+          const [cookieName, cookieValue] = cookie.split("=");
+          if (cookieName === name) {
+            return decodeURIComponent(cookieValue);
+          }
+        }
+        return null;
+      };
+      if (!getCookie("theme")) {
+        setCookie("theme", "light");
+      }
+	  document.documentElement.setAttribute("data-theme", getCookie("theme"));
+    </script>
+  </body>
 </html>

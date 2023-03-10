@@ -18,10 +18,10 @@ const config = {
       pages: 'dist',
       assets: 'dist',
       fallback: 'index.html',
-      precompress: true,
-      strict: true
+      precompress: false,
+      strict: true,
     })
-  },
+  }
 };
 
 export default config;
