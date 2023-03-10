@@ -8,7 +8,7 @@
 
 <style lang="postcss">
     .main{
-        @apply h-screen w-screen flex justify-center items-center;
+        @apply h-full w-full flex justify-center items-center;
     }
     .main h1 {
         @apply font-semibold text-lg inline-flex justify-center items-center;
