@@ -22,6 +22,18 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// The time when the entity was created.
 	CreatedAt time.Time `json:"created_at,omitempty"`
+	// The user's name.
+	Name string `json:"name,omitempty"`
+	// The user's email.
+	Email string `json:"email,omitempty"`
+	// The user's password.
+	Password string `json:"-"`
+	// The user's role.
+	Role user.Role `json:"role,omitempty"`
+	// The user's token.
+	Token string `json:"-"`
+	// The user's token expiration time.
+	TokenExpired time.Time `json:"token_expired,omitempty"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -29,7 +41,9 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldUpdatedAt, user.FieldCreatedAt:
+		case user.FieldName, user.FieldEmail, user.FieldPassword, user.FieldRole, user.FieldToken:
+			values[i] = new(sql.NullString)
+		case user.FieldUpdatedAt, user.FieldCreatedAt, user.FieldTokenExpired:
 			values[i] = new(sql.NullTime)
 		case user.FieldID:
 			values[i] = new(uuid.UUID)
@@ -66,6 +80,42 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.CreatedAt = value.Time
 			}
+		case user.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				u.Name = value.String
+			}
+		case user.FieldEmail:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field email", values[i])
+			} else if value.Valid {
+				u.Email = value.String
+			}
+		case user.FieldPassword:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field password", values[i])
+			} else if value.Valid {
+				u.Password = value.String
+			}
+		case user.FieldRole:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field role", values[i])
+			} else if value.Valid {
+				u.Role = user.Role(value.String)
+			}
+		case user.FieldToken:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field token", values[i])
+			} else if value.Valid {
+				u.Token = value.String
+			}
+		case user.FieldTokenExpired:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field token_expired", values[i])
+			} else if value.Valid {
+				u.TokenExpired = value.Time
+			}
 		}
 	}
 	return nil
@@ -99,6 +149,22 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(u.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("name=")
+	builder.WriteString(u.Name)
+	builder.WriteString(", ")
+	builder.WriteString("email=")
+	builder.WriteString(u.Email)
+	builder.WriteString(", ")
+	builder.WriteString("password=<sensitive>")
+	builder.WriteString(", ")
+	builder.WriteString("role=")
+	builder.WriteString(fmt.Sprintf("%v", u.Role))
+	builder.WriteString(", ")
+	builder.WriteString("token=<sensitive>")
+	builder.WriteString(", ")
+	builder.WriteString("token_expired=")
+	builder.WriteString(u.TokenExpired.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

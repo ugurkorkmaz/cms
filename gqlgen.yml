@@ -15,17 +15,17 @@ resolver:
   filename_template: "{name}.go"
 
 autobind:
-#  - "app/graph/model"
+  - "app/ent"
+  - "app/ent/user"
+  - "app/ent/article"
+  - "app/ent/comment"
+  - "app/ent/meta"
+  - "app/ent/newsletter"
 
 models:
   ID:
     model:
-      - github.com/99designs/gqlgen/graphql.ID
-      - github.com/99designs/gqlgen/graphql.Int
-      - github.com/99designs/gqlgen/graphql.Int64
-      - github.com/99designs/gqlgen/graphql.Int32
-  Int:
+      - app/ent/schema/uuidgql.UUID
+  Node:
     model:
-      - github.com/99designs/gqlgen/graphql.Int
-      - github.com/99designs/gqlgen/graphql.Int64
-      - github.com/99designs/gqlgen/graphql.Int32
+      - app/ent.Noder

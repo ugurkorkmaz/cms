@@ -22,6 +22,8 @@ type NewsletterQuery struct {
 	order      []OrderFunc
 	inters     []Interceptor
 	predicates []predicate.Newsletter
+	modifiers  []func(*sql.Selector)
+	loadTotal  []func(context.Context, []*Newsletter) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -343,6 +345,9 @@ func (nq *NewsletterQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*N
 		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
 	}
+	if len(nq.modifiers) > 0 {
+		_spec.Modifiers = nq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -352,11 +357,19 @@ func (nq *NewsletterQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*N
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	for i := range nq.loadTotal {
+		if err := nq.loadTotal[i](ctx, nodes); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
 func (nq *NewsletterQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := nq.querySpec()
+	if len(nq.modifiers) > 0 {
+		_spec.Modifiers = nq.modifiers
+	}
 	_spec.Node.Columns = nq.ctx.Fields
 	if len(nq.ctx.Fields) > 0 {
 		_spec.Unique = nq.ctx.Unique != nil && *nq.ctx.Unique

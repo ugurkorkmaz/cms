@@ -61,6 +61,12 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "created_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Size: 64},
+		{Name: "email", Type: field.TypeString, Unique: true},
+		{Name: "password", Type: field.TypeString, Size: 264},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"admin", "author", "subscriber", "user"}, Default: "user"},
+		{Name: "token", Type: field.TypeString, Nullable: true},
+		{Name: "token_expired", Type: field.TypeTime, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{

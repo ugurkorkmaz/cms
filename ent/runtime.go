@@ -129,6 +129,66 @@ func init() {
 	userDescCreatedAt := userMixinFields2[0].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
+	// userDescName is the schema descriptor for name field.
+	userDescName := userFields[0].Descriptor()
+	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	user.NameValidator = func() func(string) error {
+		validators := userDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+			validators[2].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// userDescEmail is the schema descriptor for email field.
+	userDescEmail := userFields[1].Descriptor()
+	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	user.EmailValidator = func() func(string) error {
+		validators := userDescEmail.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(email string) error {
+			for _, fn := range fns {
+				if err := fn(email); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// userDescPassword is the schema descriptor for password field.
+	userDescPassword := userFields[2].Descriptor()
+	// user.PasswordValidator is a validator for the "password" field. It is called by the builders before save.
+	user.PasswordValidator = func() func(string) error {
+		validators := userDescPassword.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+			validators[2].(func(string) error),
+		}
+		return func(password string) error {
+			for _, fn := range fns {
+				if err := fn(password); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// userDescTokenExpired is the schema descriptor for token_expired field.
+	userDescTokenExpired := userFields[5].Descriptor()
+	// user.DefaultTokenExpired holds the default value on creation for the token_expired field.
+	user.DefaultTokenExpired = userDescTokenExpired.Default.(time.Time)
 	// userDescID is the schema descriptor for id field.
 	userDescID := userMixinFields0[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.

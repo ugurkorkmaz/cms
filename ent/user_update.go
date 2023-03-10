@@ -34,6 +34,72 @@ func (uu *UserUpdate) SetUpdatedAt(t time.Time) *UserUpdate {
 	return uu
 }
 
+// SetName sets the "name" field.
+func (uu *UserUpdate) SetName(s string) *UserUpdate {
+	uu.mutation.SetName(s)
+	return uu
+}
+
+// SetPassword sets the "password" field.
+func (uu *UserUpdate) SetPassword(s string) *UserUpdate {
+	uu.mutation.SetPassword(s)
+	return uu
+}
+
+// SetRole sets the "role" field.
+func (uu *UserUpdate) SetRole(u user.Role) *UserUpdate {
+	uu.mutation.SetRole(u)
+	return uu
+}
+
+// SetNillableRole sets the "role" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableRole(u *user.Role) *UserUpdate {
+	if u != nil {
+		uu.SetRole(*u)
+	}
+	return uu
+}
+
+// SetToken sets the "token" field.
+func (uu *UserUpdate) SetToken(s string) *UserUpdate {
+	uu.mutation.SetToken(s)
+	return uu
+}
+
+// SetNillableToken sets the "token" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableToken(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetToken(*s)
+	}
+	return uu
+}
+
+// ClearToken clears the value of the "token" field.
+func (uu *UserUpdate) ClearToken() *UserUpdate {
+	uu.mutation.ClearToken()
+	return uu
+}
+
+// SetTokenExpired sets the "token_expired" field.
+func (uu *UserUpdate) SetTokenExpired(t time.Time) *UserUpdate {
+	uu.mutation.SetTokenExpired(t)
+	return uu
+}
+
+// SetNillableTokenExpired sets the "token_expired" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableTokenExpired(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetTokenExpired(*t)
+	}
+	return uu
+}
+
+// ClearTokenExpired clears the value of the "token_expired" field.
+func (uu *UserUpdate) ClearTokenExpired() *UserUpdate {
+	uu.mutation.ClearTokenExpired()
+	return uu
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -75,7 +141,30 @@ func (uu *UserUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (uu *UserUpdate) check() error {
+	if v, ok := uu.mutation.Name(); ok {
+		if err := user.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
+		}
+	}
+	if v, ok := uu.mutation.Password(); ok {
+		if err := user.PasswordValidator(v); err != nil {
+			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
+		}
+	}
+	if v, ok := uu.mutation.Role(); ok {
+		if err := user.RoleValidator(v); err != nil {
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := uu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID))
 	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -86,6 +175,27 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := uu.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := uu.mutation.Name(); ok {
+		_spec.SetField(user.FieldName, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.Password(); ok {
+		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.Role(); ok {
+		_spec.SetField(user.FieldRole, field.TypeEnum, value)
+	}
+	if value, ok := uu.mutation.Token(); ok {
+		_spec.SetField(user.FieldToken, field.TypeString, value)
+	}
+	if uu.mutation.TokenCleared() {
+		_spec.ClearField(user.FieldToken, field.TypeString)
+	}
+	if value, ok := uu.mutation.TokenExpired(); ok {
+		_spec.SetField(user.FieldTokenExpired, field.TypeTime, value)
+	}
+	if uu.mutation.TokenExpiredCleared() {
+		_spec.ClearField(user.FieldTokenExpired, field.TypeTime)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -110,6 +220,72 @@ type UserUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (uuo *UserUpdateOne) SetUpdatedAt(t time.Time) *UserUpdateOne {
 	uuo.mutation.SetUpdatedAt(t)
+	return uuo
+}
+
+// SetName sets the "name" field.
+func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
+	uuo.mutation.SetName(s)
+	return uuo
+}
+
+// SetPassword sets the "password" field.
+func (uuo *UserUpdateOne) SetPassword(s string) *UserUpdateOne {
+	uuo.mutation.SetPassword(s)
+	return uuo
+}
+
+// SetRole sets the "role" field.
+func (uuo *UserUpdateOne) SetRole(u user.Role) *UserUpdateOne {
+	uuo.mutation.SetRole(u)
+	return uuo
+}
+
+// SetNillableRole sets the "role" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableRole(u *user.Role) *UserUpdateOne {
+	if u != nil {
+		uuo.SetRole(*u)
+	}
+	return uuo
+}
+
+// SetToken sets the "token" field.
+func (uuo *UserUpdateOne) SetToken(s string) *UserUpdateOne {
+	uuo.mutation.SetToken(s)
+	return uuo
+}
+
+// SetNillableToken sets the "token" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableToken(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetToken(*s)
+	}
+	return uuo
+}
+
+// ClearToken clears the value of the "token" field.
+func (uuo *UserUpdateOne) ClearToken() *UserUpdateOne {
+	uuo.mutation.ClearToken()
+	return uuo
+}
+
+// SetTokenExpired sets the "token_expired" field.
+func (uuo *UserUpdateOne) SetTokenExpired(t time.Time) *UserUpdateOne {
+	uuo.mutation.SetTokenExpired(t)
+	return uuo
+}
+
+// SetNillableTokenExpired sets the "token_expired" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableTokenExpired(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetTokenExpired(*t)
+	}
+	return uuo
+}
+
+// ClearTokenExpired clears the value of the "token_expired" field.
+func (uuo *UserUpdateOne) ClearTokenExpired() *UserUpdateOne {
+	uuo.mutation.ClearTokenExpired()
 	return uuo
 }
 
@@ -167,7 +343,30 @@ func (uuo *UserUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (uuo *UserUpdateOne) check() error {
+	if v, ok := uuo.mutation.Name(); ok {
+		if err := user.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
+		}
+	}
+	if v, ok := uuo.mutation.Password(); ok {
+		if err := user.PasswordValidator(v); err != nil {
+			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
+		}
+	}
+	if v, ok := uuo.mutation.Role(); ok {
+		if err := user.RoleValidator(v); err != nil {
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
+	if err := uuo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID))
 	id, ok := uuo.mutation.ID()
 	if !ok {
@@ -195,6 +394,27 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := uuo.mutation.Name(); ok {
+		_spec.SetField(user.FieldName, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.Password(); ok {
+		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.Role(); ok {
+		_spec.SetField(user.FieldRole, field.TypeEnum, value)
+	}
+	if value, ok := uuo.mutation.Token(); ok {
+		_spec.SetField(user.FieldToken, field.TypeString, value)
+	}
+	if uuo.mutation.TokenCleared() {
+		_spec.ClearField(user.FieldToken, field.TypeString)
+	}
+	if value, ok := uuo.mutation.TokenExpired(); ok {
+		_spec.SetField(user.FieldTokenExpired, field.TypeTime, value)
+	}
+	if uuo.mutation.TokenExpiredCleared() {
+		_spec.ClearField(user.FieldTokenExpired, field.TypeTime)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues

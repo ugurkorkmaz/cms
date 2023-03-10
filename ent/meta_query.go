@@ -22,6 +22,8 @@ type MetaQuery struct {
 	order      []OrderFunc
 	inters     []Interceptor
 	predicates []predicate.Meta
+	modifiers  []func(*sql.Selector)
+	loadTotal  []func(context.Context, []*Meta) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -343,6 +345,9 @@ func (mq *MetaQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Meta, e
 		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
 	}
+	if len(mq.modifiers) > 0 {
+		_spec.Modifiers = mq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -352,11 +357,19 @@ func (mq *MetaQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Meta, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	for i := range mq.loadTotal {
+		if err := mq.loadTotal[i](ctx, nodes); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
 func (mq *MetaQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := mq.querySpec()
+	if len(mq.modifiers) > 0 {
+		_spec.Modifiers = mq.modifiers
+	}
 	_spec.Node.Columns = mq.ctx.Fields
 	if len(mq.ctx.Fields) > 0 {
 		_spec.Unique = mq.ctx.Unique != nil && *mq.ctx.Unique
