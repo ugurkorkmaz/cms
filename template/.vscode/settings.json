@@ -11,7 +11,8 @@
         "template.go": true,
         "postcss.config.cjs": true,
         ".svelte-kit": true,
-        "dist": true
+        "dist": true,
+        "static": true
     },
     "hide-files.files": [
         "node_modules",
@@ -19,6 +20,7 @@
         "template.go",
         "postcss.config.cjs",
         ".svelte-kit",
-        "dist"
+        "dist",
+        "static"
     ]
 }

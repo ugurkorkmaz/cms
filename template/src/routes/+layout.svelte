@@ -9,17 +9,16 @@
   import Transition from "$lib/component/Transition.svelte";
   import Wrapper from "$lib/component/Wrapper.svelte";
   import { theme, routes, type Route } from "$lib/store/client";
-  import { get } from "$lib/store/cookie";
+  import { get } from "$lib/cookie";
   import Navbar from "$lib/component/Navbar.svelte";
   import { guard } from "$lib/store/auth";
 
-  /*$: if (browser) {
+  $: if (browser) {
     const current = $routes.find((route) => route.path === $page.url.pathname) as Route
     if ($guard && current.auth) goto(current.path);
     $theme = get("theme") as string;
-  }*/
+  }
 </script>
-
 <Wrapper>
   <Header />
   <Navbar />

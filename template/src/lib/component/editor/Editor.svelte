@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "$lib/component/Icon.svelte";
-  import type { Snapshot } from "../../routes/$types";
+  import type { Snapshot } from "../../../routes/$types";
   import Code from "./Code.svelte";
   import Image from "./Image.svelte";
   import Link from "./Link.svelte";

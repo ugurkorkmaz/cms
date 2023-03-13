@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+//go:generate pnpm build
 //go:embed all:dist
 var Dist embed.FS
 

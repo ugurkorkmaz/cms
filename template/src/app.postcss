@@ -7,5 +7,17 @@ html,body {
   @apply w-full h-full;
 }
 ::-webkit-scrollbar {
-  @apply w-1;
+  @apply w-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-primary;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary-content;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary;
 }
