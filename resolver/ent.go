@@ -22,8 +22,55 @@ func (r *queryResolver) Nodes(ctx context.Context, ids []uuid.UUID) ([]ent.Noder
 	return r.client.Noders(ctx, ids)
 }
 
+// Articles is the resolver for the articles field.
+func (r *queryResolver) Articles(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.ArticleOrder, where *ent.ArticleWhereInput) (*ent.ArticleConnection, error) {
+	return r.client.Article.Query().
+		Paginate(ctx, after, first, before, last,
+			ent.WithArticleOrder(orderBy),
+		)
+}
+
+// Categories is the resolver for the categories field.
+func (r *queryResolver) Categories(ctx context.Context) ([]*ent.Category, error) {
+	return r.client.Category.Query().All(ctx)
+}
+
+// Comments is the resolver for the comments field.
+func (r *queryResolver) Comments(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.CommentOrder, where *ent.CommentWhereInput) (*ent.CommentConnection, error) {
+	return r.client.Comment.Query().
+		Paginate(ctx, after, first, before, last,
+			ent.WithCommentOrder(orderBy),
+		)
+}
+
+// Galleries is the resolver for the galleries field.
+func (r *queryResolver) Galleries(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.GalleryOrder, where *ent.GalleryWhereInput) (*ent.GalleryConnection, error) {
+	return r.client.Gallery.Query().
+		Paginate(ctx, after, first, before, last,
+			ent.WithGalleryOrder(orderBy),
+		)
+}
+
+// Metadata is the resolver for the METADATA field.
+func (r *queryResolver) Metadata(ctx context.Context) ([]*ent.Metadata, error) {
+	return r.client.Metadata.Query().All(ctx)
+}
+
+// Newsletters is the resolver for the newsletters field.
+func (r *queryResolver) Newsletters(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.NewsletterOrder, where *ent.NewsletterWhereInput) (*ent.NewsletterConnection, error) {
+	return r.client.Newsletter.Query().
+		Paginate(ctx, after, first, before, last,
+			ent.WithNewsletterOrder(orderBy),
+		)
+}
+
+// Tags is the resolver for the tags field.
+func (r *queryResolver) Tags(ctx context.Context) ([]*ent.Tag, error) {
+	return r.client.Tag.Query().All(ctx)
+}
+
 // Users is the resolver for the users field.
-func (r *queryResolver) Users(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder) (*ent.UserConnection, error) {
+func (r *queryResolver) Users(ctx context.Context, after *ent.Cursor, first *int, before *ent.Cursor, last *int, orderBy *ent.UserOrder, where *ent.UserWhereInput) (*ent.UserConnection, error) {
 	return r.client.User.Query().
 		Paginate(ctx, after, first, before, last,
 			ent.WithUserOrder(orderBy),

@@ -21,20 +21,6 @@ type CommentCreate struct {
 	hooks    []Hook
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (cc *CommentCreate) SetUpdatedAt(t time.Time) *CommentCreate {
-	cc.mutation.SetUpdatedAt(t)
-	return cc
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (cc *CommentCreate) SetNillableUpdatedAt(t *time.Time) *CommentCreate {
-	if t != nil {
-		cc.SetUpdatedAt(*t)
-	}
-	return cc
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (cc *CommentCreate) SetCreatedAt(t time.Time) *CommentCreate {
 	cc.mutation.SetCreatedAt(t)
@@ -46,6 +32,12 @@ func (cc *CommentCreate) SetNillableCreatedAt(t *time.Time) *CommentCreate {
 	if t != nil {
 		cc.SetCreatedAt(*t)
 	}
+	return cc
+}
+
+// SetContent sets the "content" field.
+func (cc *CommentCreate) SetContent(s string) *CommentCreate {
+	cc.mutation.SetContent(s)
 	return cc
 }
 
@@ -98,10 +90,6 @@ func (cc *CommentCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (cc *CommentCreate) defaults() {
-	if _, ok := cc.mutation.UpdatedAt(); !ok {
-		v := comment.DefaultUpdatedAt()
-		cc.mutation.SetUpdatedAt(v)
-	}
 	if _, ok := cc.mutation.CreatedAt(); !ok {
 		v := comment.DefaultCreatedAt()
 		cc.mutation.SetCreatedAt(v)
@@ -114,11 +102,16 @@ func (cc *CommentCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (cc *CommentCreate) check() error {
-	if _, ok := cc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Comment.updated_at"`)}
-	}
 	if _, ok := cc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Comment.created_at"`)}
+	}
+	if _, ok := cc.mutation.Content(); !ok {
+		return &ValidationError{Name: "content", err: errors.New(`ent: missing required field "Comment.content"`)}
+	}
+	if v, ok := cc.mutation.Content(); ok {
+		if err := comment.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "Comment.content": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -155,13 +148,13 @@ func (cc *CommentCreate) createSpec() (*Comment, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := cc.mutation.UpdatedAt(); ok {
-		_spec.SetField(comment.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
-	}
 	if value, ok := cc.mutation.CreatedAt(); ok {
 		_spec.SetField(comment.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
+	}
+	if value, ok := cc.mutation.Content(); ok {
+		_spec.SetField(comment.FieldContent, field.TypeString, value)
+		_node.Content = value
 	}
 	return _node, _spec
 }

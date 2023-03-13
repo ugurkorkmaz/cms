@@ -22,7 +22,7 @@ import (
 	"modernc.org/sqlite"
 )
 
-const defaultPort = "8080"
+const defaultPort = "5000"
 
 var ctx context.Context
 

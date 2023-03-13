@@ -19,7 +19,7 @@ func main() {
 		entgql.WithSchemaPath("schema/ent.gql"),
 		entgql.WithWhereFilters(false),
 		entgql.WithNodeDescriptor(true),
-		entgql.WithWhereInputs(false),
+		entgql.WithWhereInputs(true),
 	)
 	if err != nil {
 		log.Fatalf("creating entgql extension: %v", err)

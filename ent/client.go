@@ -11,14 +11,18 @@ import (
 	"app/ent/migrate"
 
 	"app/ent/article"
+	"app/ent/category"
 	"app/ent/comment"
-	"app/ent/meta"
+	"app/ent/gallery"
+	"app/ent/metadata"
 	"app/ent/newsletter"
+	"app/ent/tag"
 	"app/ent/user"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -29,12 +33,18 @@ type Client struct {
 	Schema *migrate.Schema
 	// Article is the client for interacting with the Article builders.
 	Article *ArticleClient
+	// Category is the client for interacting with the Category builders.
+	Category *CategoryClient
 	// Comment is the client for interacting with the Comment builders.
 	Comment *CommentClient
-	// Meta is the client for interacting with the Meta builders.
-	Meta *MetaClient
+	// Gallery is the client for interacting with the Gallery builders.
+	Gallery *GalleryClient
+	// Metadata is the client for interacting with the Metadata builders.
+	Metadata *MetadataClient
 	// Newsletter is the client for interacting with the Newsletter builders.
 	Newsletter *NewsletterClient
+	// Tag is the client for interacting with the Tag builders.
+	Tag *TagClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -51,9 +61,12 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Article = NewArticleClient(c.config)
+	c.Category = NewCategoryClient(c.config)
 	c.Comment = NewCommentClient(c.config)
-	c.Meta = NewMetaClient(c.config)
+	c.Gallery = NewGalleryClient(c.config)
+	c.Metadata = NewMetadataClient(c.config)
 	c.Newsletter = NewNewsletterClient(c.config)
+	c.Tag = NewTagClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -138,9 +151,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:        ctx,
 		config:     cfg,
 		Article:    NewArticleClient(cfg),
+		Category:   NewCategoryClient(cfg),
 		Comment:    NewCommentClient(cfg),
-		Meta:       NewMetaClient(cfg),
+		Gallery:    NewGalleryClient(cfg),
+		Metadata:   NewMetadataClient(cfg),
 		Newsletter: NewNewsletterClient(cfg),
+		Tag:        NewTagClient(cfg),
 		User:       NewUserClient(cfg),
 	}, nil
 }
@@ -162,9 +178,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:        ctx,
 		config:     cfg,
 		Article:    NewArticleClient(cfg),
+		Category:   NewCategoryClient(cfg),
 		Comment:    NewCommentClient(cfg),
-		Meta:       NewMetaClient(cfg),
+		Gallery:    NewGalleryClient(cfg),
+		Metadata:   NewMetadataClient(cfg),
 		Newsletter: NewNewsletterClient(cfg),
+		Tag:        NewTagClient(cfg),
 		User:       NewUserClient(cfg),
 	}, nil
 }
@@ -194,21 +213,23 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Article.Use(hooks...)
-	c.Comment.Use(hooks...)
-	c.Meta.Use(hooks...)
-	c.Newsletter.Use(hooks...)
-	c.User.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.Article, c.Category, c.Comment, c.Gallery, c.Metadata, c.Newsletter, c.Tag,
+		c.User,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Article.Intercept(interceptors...)
-	c.Comment.Intercept(interceptors...)
-	c.Meta.Intercept(interceptors...)
-	c.Newsletter.Intercept(interceptors...)
-	c.User.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.Article, c.Category, c.Comment, c.Gallery, c.Metadata, c.Newsletter, c.Tag,
+		c.User,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -216,12 +237,18 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *ArticleMutation:
 		return c.Article.mutate(ctx, m)
+	case *CategoryMutation:
+		return c.Category.mutate(ctx, m)
 	case *CommentMutation:
 		return c.Comment.mutate(ctx, m)
-	case *MetaMutation:
-		return c.Meta.mutate(ctx, m)
+	case *GalleryMutation:
+		return c.Gallery.mutate(ctx, m)
+	case *MetadataMutation:
+		return c.Metadata.mutate(ctx, m)
 	case *NewsletterMutation:
 		return c.Newsletter.mutate(ctx, m)
+	case *TagMutation:
+		return c.Tag.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -322,6 +349,22 @@ func (c *ArticleClient) GetX(ctx context.Context, id uuid.UUID) *Article {
 	return obj
 }
 
+// QueryCategories queries the categories edge of a Article.
+func (c *ArticleClient) QueryCategories(a *Article) *CategoryQuery {
+	query := (&CategoryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(article.Table, article.FieldID, id),
+			sqlgraph.To(category.Table, category.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, article.CategoriesTable, article.CategoriesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ArticleClient) Hooks() []Hook {
 	return c.hooks.Article
@@ -344,6 +387,140 @@ func (c *ArticleClient) mutate(ctx context.Context, m *ArticleMutation) (Value, 
 		return (&ArticleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Article mutation op: %q", m.Op())
+	}
+}
+
+// CategoryClient is a client for the Category schema.
+type CategoryClient struct {
+	config
+}
+
+// NewCategoryClient returns a client for the Category from the given config.
+func NewCategoryClient(c config) *CategoryClient {
+	return &CategoryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `category.Hooks(f(g(h())))`.
+func (c *CategoryClient) Use(hooks ...Hook) {
+	c.hooks.Category = append(c.hooks.Category, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `category.Intercept(f(g(h())))`.
+func (c *CategoryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Category = append(c.inters.Category, interceptors...)
+}
+
+// Create returns a builder for creating a Category entity.
+func (c *CategoryClient) Create() *CategoryCreate {
+	mutation := newCategoryMutation(c.config, OpCreate)
+	return &CategoryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Category entities.
+func (c *CategoryClient) CreateBulk(builders ...*CategoryCreate) *CategoryCreateBulk {
+	return &CategoryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Category.
+func (c *CategoryClient) Update() *CategoryUpdate {
+	mutation := newCategoryMutation(c.config, OpUpdate)
+	return &CategoryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CategoryClient) UpdateOne(ca *Category) *CategoryUpdateOne {
+	mutation := newCategoryMutation(c.config, OpUpdateOne, withCategory(ca))
+	return &CategoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CategoryClient) UpdateOneID(id uuid.UUID) *CategoryUpdateOne {
+	mutation := newCategoryMutation(c.config, OpUpdateOne, withCategoryID(id))
+	return &CategoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Category.
+func (c *CategoryClient) Delete() *CategoryDelete {
+	mutation := newCategoryMutation(c.config, OpDelete)
+	return &CategoryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CategoryClient) DeleteOne(ca *Category) *CategoryDeleteOne {
+	return c.DeleteOneID(ca.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CategoryClient) DeleteOneID(id uuid.UUID) *CategoryDeleteOne {
+	builder := c.Delete().Where(category.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CategoryDeleteOne{builder}
+}
+
+// Query returns a query builder for Category.
+func (c *CategoryClient) Query() *CategoryQuery {
+	return &CategoryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCategory},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Category entity by its id.
+func (c *CategoryClient) Get(ctx context.Context, id uuid.UUID) (*Category, error) {
+	return c.Query().Where(category.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CategoryClient) GetX(ctx context.Context, id uuid.UUID) *Category {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryArticle queries the article edge of a Category.
+func (c *CategoryClient) QueryArticle(ca *Category) *ArticleQuery {
+	query := (&ArticleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ca.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(category.Table, category.FieldID, id),
+			sqlgraph.To(article.Table, article.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, category.ArticleTable, category.ArticlePrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(ca.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CategoryClient) Hooks() []Hook {
+	return c.hooks.Category
+}
+
+// Interceptors returns the client interceptors.
+func (c *CategoryClient) Interceptors() []Interceptor {
+	return c.inters.Category
+}
+
+func (c *CategoryClient) mutate(ctx context.Context, m *CategoryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CategoryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CategoryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CategoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CategoryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Category mutation op: %q", m.Op())
 	}
 }
 
@@ -465,92 +642,92 @@ func (c *CommentClient) mutate(ctx context.Context, m *CommentMutation) (Value, 
 	}
 }
 
-// MetaClient is a client for the Meta schema.
-type MetaClient struct {
+// GalleryClient is a client for the Gallery schema.
+type GalleryClient struct {
 	config
 }
 
-// NewMetaClient returns a client for the Meta from the given config.
-func NewMetaClient(c config) *MetaClient {
-	return &MetaClient{config: c}
+// NewGalleryClient returns a client for the Gallery from the given config.
+func NewGalleryClient(c config) *GalleryClient {
+	return &GalleryClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `meta.Hooks(f(g(h())))`.
-func (c *MetaClient) Use(hooks ...Hook) {
-	c.hooks.Meta = append(c.hooks.Meta, hooks...)
+// A call to `Use(f, g, h)` equals to `gallery.Hooks(f(g(h())))`.
+func (c *GalleryClient) Use(hooks ...Hook) {
+	c.hooks.Gallery = append(c.hooks.Gallery, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `meta.Intercept(f(g(h())))`.
-func (c *MetaClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Meta = append(c.inters.Meta, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `gallery.Intercept(f(g(h())))`.
+func (c *GalleryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Gallery = append(c.inters.Gallery, interceptors...)
 }
 
-// Create returns a builder for creating a Meta entity.
-func (c *MetaClient) Create() *MetaCreate {
-	mutation := newMetaMutation(c.config, OpCreate)
-	return &MetaCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Gallery entity.
+func (c *GalleryClient) Create() *GalleryCreate {
+	mutation := newGalleryMutation(c.config, OpCreate)
+	return &GalleryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Meta entities.
-func (c *MetaClient) CreateBulk(builders ...*MetaCreate) *MetaCreateBulk {
-	return &MetaCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Gallery entities.
+func (c *GalleryClient) CreateBulk(builders ...*GalleryCreate) *GalleryCreateBulk {
+	return &GalleryCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Meta.
-func (c *MetaClient) Update() *MetaUpdate {
-	mutation := newMetaMutation(c.config, OpUpdate)
-	return &MetaUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Gallery.
+func (c *GalleryClient) Update() *GalleryUpdate {
+	mutation := newGalleryMutation(c.config, OpUpdate)
+	return &GalleryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *MetaClient) UpdateOne(m *Meta) *MetaUpdateOne {
-	mutation := newMetaMutation(c.config, OpUpdateOne, withMeta(m))
-	return &MetaUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *GalleryClient) UpdateOne(ga *Gallery) *GalleryUpdateOne {
+	mutation := newGalleryMutation(c.config, OpUpdateOne, withGallery(ga))
+	return &GalleryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *MetaClient) UpdateOneID(id uuid.UUID) *MetaUpdateOne {
-	mutation := newMetaMutation(c.config, OpUpdateOne, withMetaID(id))
-	return &MetaUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *GalleryClient) UpdateOneID(id uuid.UUID) *GalleryUpdateOne {
+	mutation := newGalleryMutation(c.config, OpUpdateOne, withGalleryID(id))
+	return &GalleryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Meta.
-func (c *MetaClient) Delete() *MetaDelete {
-	mutation := newMetaMutation(c.config, OpDelete)
-	return &MetaDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Gallery.
+func (c *GalleryClient) Delete() *GalleryDelete {
+	mutation := newGalleryMutation(c.config, OpDelete)
+	return &GalleryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *MetaClient) DeleteOne(m *Meta) *MetaDeleteOne {
-	return c.DeleteOneID(m.ID)
+func (c *GalleryClient) DeleteOne(ga *Gallery) *GalleryDeleteOne {
+	return c.DeleteOneID(ga.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *MetaClient) DeleteOneID(id uuid.UUID) *MetaDeleteOne {
-	builder := c.Delete().Where(meta.ID(id))
+func (c *GalleryClient) DeleteOneID(id uuid.UUID) *GalleryDeleteOne {
+	builder := c.Delete().Where(gallery.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &MetaDeleteOne{builder}
+	return &GalleryDeleteOne{builder}
 }
 
-// Query returns a query builder for Meta.
-func (c *MetaClient) Query() *MetaQuery {
-	return &MetaQuery{
+// Query returns a query builder for Gallery.
+func (c *GalleryClient) Query() *GalleryQuery {
+	return &GalleryQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeMeta},
+		ctx:    &QueryContext{Type: TypeGallery},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a Meta entity by its id.
-func (c *MetaClient) Get(ctx context.Context, id uuid.UUID) (*Meta, error) {
-	return c.Query().Where(meta.ID(id)).Only(ctx)
+// Get returns a Gallery entity by its id.
+func (c *GalleryClient) Get(ctx context.Context, id uuid.UUID) (*Gallery, error) {
+	return c.Query().Where(gallery.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *MetaClient) GetX(ctx context.Context, id uuid.UUID) *Meta {
+func (c *GalleryClient) GetX(ctx context.Context, id uuid.UUID) *Gallery {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -559,27 +736,145 @@ func (c *MetaClient) GetX(ctx context.Context, id uuid.UUID) *Meta {
 }
 
 // Hooks returns the client hooks.
-func (c *MetaClient) Hooks() []Hook {
-	return c.hooks.Meta
+func (c *GalleryClient) Hooks() []Hook {
+	return c.hooks.Gallery
 }
 
 // Interceptors returns the client interceptors.
-func (c *MetaClient) Interceptors() []Interceptor {
-	return c.inters.Meta
+func (c *GalleryClient) Interceptors() []Interceptor {
+	return c.inters.Gallery
 }
 
-func (c *MetaClient) mutate(ctx context.Context, m *MetaMutation) (Value, error) {
+func (c *GalleryClient) mutate(ctx context.Context, m *GalleryMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&MetaCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&GalleryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&MetaUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&GalleryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&MetaUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&GalleryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&MetaDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&GalleryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Meta mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Gallery mutation op: %q", m.Op())
+	}
+}
+
+// MetadataClient is a client for the Metadata schema.
+type MetadataClient struct {
+	config
+}
+
+// NewMetadataClient returns a client for the Metadata from the given config.
+func NewMetadataClient(c config) *MetadataClient {
+	return &MetadataClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `metadata.Hooks(f(g(h())))`.
+func (c *MetadataClient) Use(hooks ...Hook) {
+	c.hooks.Metadata = append(c.hooks.Metadata, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `metadata.Intercept(f(g(h())))`.
+func (c *MetadataClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Metadata = append(c.inters.Metadata, interceptors...)
+}
+
+// Create returns a builder for creating a Metadata entity.
+func (c *MetadataClient) Create() *MetadataCreate {
+	mutation := newMetadataMutation(c.config, OpCreate)
+	return &MetadataCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Metadata entities.
+func (c *MetadataClient) CreateBulk(builders ...*MetadataCreate) *MetadataCreateBulk {
+	return &MetadataCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Metadata.
+func (c *MetadataClient) Update() *MetadataUpdate {
+	mutation := newMetadataMutation(c.config, OpUpdate)
+	return &MetadataUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MetadataClient) UpdateOne(m *Metadata) *MetadataUpdateOne {
+	mutation := newMetadataMutation(c.config, OpUpdateOne, withMetadata(m))
+	return &MetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MetadataClient) UpdateOneID(id uuid.UUID) *MetadataUpdateOne {
+	mutation := newMetadataMutation(c.config, OpUpdateOne, withMetadataID(id))
+	return &MetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Metadata.
+func (c *MetadataClient) Delete() *MetadataDelete {
+	mutation := newMetadataMutation(c.config, OpDelete)
+	return &MetadataDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MetadataClient) DeleteOne(m *Metadata) *MetadataDeleteOne {
+	return c.DeleteOneID(m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MetadataClient) DeleteOneID(id uuid.UUID) *MetadataDeleteOne {
+	builder := c.Delete().Where(metadata.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MetadataDeleteOne{builder}
+}
+
+// Query returns a query builder for Metadata.
+func (c *MetadataClient) Query() *MetadataQuery {
+	return &MetadataQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMetadata},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Metadata entity by its id.
+func (c *MetadataClient) Get(ctx context.Context, id uuid.UUID) (*Metadata, error) {
+	return c.Query().Where(metadata.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MetadataClient) GetX(ctx context.Context, id uuid.UUID) *Metadata {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MetadataClient) Hooks() []Hook {
+	return c.hooks.Metadata
+}
+
+// Interceptors returns the client interceptors.
+func (c *MetadataClient) Interceptors() []Interceptor {
+	return c.inters.Metadata
+}
+
+func (c *MetadataClient) mutate(ctx context.Context, m *MetadataMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MetadataCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MetadataUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MetadataDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Metadata mutation op: %q", m.Op())
 	}
 }
 
@@ -698,6 +993,124 @@ func (c *NewsletterClient) mutate(ctx context.Context, m *NewsletterMutation) (V
 		return (&NewsletterDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Newsletter mutation op: %q", m.Op())
+	}
+}
+
+// TagClient is a client for the Tag schema.
+type TagClient struct {
+	config
+}
+
+// NewTagClient returns a client for the Tag from the given config.
+func NewTagClient(c config) *TagClient {
+	return &TagClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tag.Hooks(f(g(h())))`.
+func (c *TagClient) Use(hooks ...Hook) {
+	c.hooks.Tag = append(c.hooks.Tag, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tag.Intercept(f(g(h())))`.
+func (c *TagClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Tag = append(c.inters.Tag, interceptors...)
+}
+
+// Create returns a builder for creating a Tag entity.
+func (c *TagClient) Create() *TagCreate {
+	mutation := newTagMutation(c.config, OpCreate)
+	return &TagCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Tag entities.
+func (c *TagClient) CreateBulk(builders ...*TagCreate) *TagCreateBulk {
+	return &TagCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Tag.
+func (c *TagClient) Update() *TagUpdate {
+	mutation := newTagMutation(c.config, OpUpdate)
+	return &TagUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TagClient) UpdateOne(t *Tag) *TagUpdateOne {
+	mutation := newTagMutation(c.config, OpUpdateOne, withTag(t))
+	return &TagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TagClient) UpdateOneID(id uuid.UUID) *TagUpdateOne {
+	mutation := newTagMutation(c.config, OpUpdateOne, withTagID(id))
+	return &TagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Tag.
+func (c *TagClient) Delete() *TagDelete {
+	mutation := newTagMutation(c.config, OpDelete)
+	return &TagDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TagClient) DeleteOne(t *Tag) *TagDeleteOne {
+	return c.DeleteOneID(t.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TagClient) DeleteOneID(id uuid.UUID) *TagDeleteOne {
+	builder := c.Delete().Where(tag.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TagDeleteOne{builder}
+}
+
+// Query returns a query builder for Tag.
+func (c *TagClient) Query() *TagQuery {
+	return &TagQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTag},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Tag entity by its id.
+func (c *TagClient) Get(ctx context.Context, id uuid.UUID) (*Tag, error) {
+	return c.Query().Where(tag.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TagClient) GetX(ctx context.Context, id uuid.UUID) *Tag {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TagClient) Hooks() []Hook {
+	return c.hooks.Tag
+}
+
+// Interceptors returns the client interceptors.
+func (c *TagClient) Interceptors() []Interceptor {
+	return c.inters.Tag
+}
+
+func (c *TagClient) mutate(ctx context.Context, m *TagMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TagCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TagUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TagDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Tag mutation op: %q", m.Op())
 	}
 }
 
@@ -822,9 +1235,10 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Article, Comment, Meta, Newsletter, User []ent.Hook
+		Article, Category, Comment, Gallery, Metadata, Newsletter, Tag, User []ent.Hook
 	}
 	inters struct {
-		Article, Comment, Meta, Newsletter, User []ent.Interceptor
+		Article, Category, Comment, Gallery, Metadata, Newsletter, Tag,
+		User []ent.Interceptor
 	}
 )

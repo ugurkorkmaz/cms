@@ -6,7 +6,6 @@ import (
 	"app/ent/article"
 	"fmt"
 	"strings"
-	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
@@ -18,10 +17,39 @@ type Article struct {
 	// ID of the ent.
 	// The unique identifier of the entity.
 	ID uuid.UUID `json:"id,omitempty"`
-	// The time when the entity was updated.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// The time when the entity was created.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	// The article's title.
+	Title string `json:"title,omitempty"`
+	// The article's slug.
+	Slug string `json:"slug,omitempty"`
+	// The article's description.
+	Description string `json:"description,omitempty"`
+	// The article's content.
+	Content string `json:"content,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ArticleQuery when eager-loading is set.
+	Edges ArticleEdges `json:"edges"`
+}
+
+// ArticleEdges holds the relations/edges for other nodes in the graph.
+type ArticleEdges struct {
+	// The article's category
+	Categories []*Category `json:"categories,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+	// totalCount holds the count of the edges above.
+	totalCount [1]map[string]int
+
+	namedCategories map[string][]*Category
+}
+
+// CategoriesOrErr returns the Categories value or an error if the edge
+// was not loaded in eager-loading.
+func (e ArticleEdges) CategoriesOrErr() ([]*Category, error) {
+	if e.loadedTypes[0] {
+		return e.Categories, nil
+	}
+	return nil, &NotLoadedError{edge: "categories"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -29,8 +57,8 @@ func (*Article) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case article.FieldUpdatedAt, article.FieldCreatedAt:
-			values[i] = new(sql.NullTime)
+		case article.FieldTitle, article.FieldSlug, article.FieldDescription, article.FieldContent:
+			values[i] = new(sql.NullString)
 		case article.FieldID:
 			values[i] = new(uuid.UUID)
 		default:
@@ -54,21 +82,38 @@ func (a *Article) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				a.ID = *value
 			}
-		case article.FieldUpdatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+		case article.FieldTitle:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field title", values[i])
 			} else if value.Valid {
-				a.UpdatedAt = value.Time
+				a.Title = value.String
 			}
-		case article.FieldCreatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+		case article.FieldSlug:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field slug", values[i])
 			} else if value.Valid {
-				a.CreatedAt = value.Time
+				a.Slug = value.String
+			}
+		case article.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				a.Description = value.String
+			}
+		case article.FieldContent:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field content", values[i])
+			} else if value.Valid {
+				a.Content = value.String
 			}
 		}
 	}
 	return nil
+}
+
+// QueryCategories queries the "categories" edge of the Article entity.
+func (a *Article) QueryCategories() *CategoryQuery {
+	return NewArticleClient(a.config).QueryCategories(a)
 }
 
 // Update returns a builder for updating this Article.
@@ -94,13 +139,43 @@ func (a *Article) String() string {
 	var builder strings.Builder
 	builder.WriteString("Article(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", a.ID))
-	builder.WriteString("updated_at=")
-	builder.WriteString(a.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString("title=")
+	builder.WriteString(a.Title)
 	builder.WriteString(", ")
-	builder.WriteString("created_at=")
-	builder.WriteString(a.CreatedAt.Format(time.ANSIC))
+	builder.WriteString("slug=")
+	builder.WriteString(a.Slug)
+	builder.WriteString(", ")
+	builder.WriteString("description=")
+	builder.WriteString(a.Description)
+	builder.WriteString(", ")
+	builder.WriteString("content=")
+	builder.WriteString(a.Content)
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedCategories returns the Categories named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (a *Article) NamedCategories(name string) ([]*Category, error) {
+	if a.Edges.namedCategories == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := a.Edges.namedCategories[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (a *Article) appendNamedCategories(name string, edges ...*Category) {
+	if a.Edges.namedCategories == nil {
+		a.Edges.namedCategories = make(map[string][]*Category)
+	}
+	if len(edges) == 0 {
+		a.Edges.namedCategories[name] = []*Category{}
+	} else {
+		a.Edges.namedCategories[name] = append(a.Edges.namedCategories[name], edges...)
+	}
 }
 
 // Articles is a parsable slice of Article.

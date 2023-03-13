@@ -60,7 +60,7 @@ func (User) Fields() []ent.Field {
 
 		field.
 			Enum("role").
-			Values("admin", "author", "subscriber", "user").
+			Values("admin", "author", "user", "subscriber").
 			Default("user").
 			Annotations(entgql.OrderField("ROLE")).
 			Comment("The user's role."),
@@ -85,6 +85,8 @@ func (User) Fields() []ent.Field {
 func (User) Edges() []ent.Edge {
 	return nil
 }
+
+// Adding the annotations to the schema.
 func (User) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entgql.RelayConnection(),

@@ -23,6 +23,22 @@ func (a *ArticleQuery) CollectFields(ctx context.Context, satisfies ...string) (
 
 func (a *ArticleQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
 	path = append([]string(nil), path...)
+	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
+		switch field.Name {
+		case "categories":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&CategoryClient{config: a.config}).Query()
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			a.WithNamedCategories(alias, func(wq *CategoryQuery) {
+				*wq = *query
+			})
+		}
+	}
 	return nil
 }
 
@@ -70,6 +86,93 @@ func newArticlePaginateArgs(rv map[string]interface{}) *articlePaginateArgs {
 				args.opts = append(args.opts, WithArticleOrder(v))
 			}
 		}
+	}
+	if v, ok := rv[whereField].(*ArticleWhereInput); ok {
+		args.opts = append(args.opts, WithArticleFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (c *CategoryQuery) CollectFields(ctx context.Context, satisfies ...string) (*CategoryQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return c, nil
+	}
+	if err := c.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (c *CategoryQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
+		switch field.Name {
+		case "article":
+			var (
+				alias = field.Alias
+				path  = append(path, alias)
+				query = (&ArticleClient{config: c.config}).Query()
+			)
+			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
+				return err
+			}
+			c.WithNamedArticle(alias, func(wq *ArticleQuery) {
+				*wq = *query
+			})
+		}
+	}
+	return nil
+}
+
+type categoryPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []CategoryPaginateOption
+}
+
+func newCategoryPaginateArgs(rv map[string]interface{}) *categoryPaginateArgs {
+	args := &categoryPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]interface{}:
+			var (
+				err1, err2 error
+				order      = &CategoryOrder{Field: &CategoryOrderField{}}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithCategoryOrder(order))
+			}
+		case *CategoryOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithCategoryOrder(v))
+			}
+		}
+	}
+	if v, ok := rv[whereField].(*CategoryWhereInput); ok {
+		args.opts = append(args.opts, WithCategoryFilter(v.Filter))
 	}
 	return args
 }
@@ -136,34 +239,37 @@ func newCommentPaginateArgs(rv map[string]interface{}) *commentPaginateArgs {
 			}
 		}
 	}
+	if v, ok := rv[whereField].(*CommentWhereInput); ok {
+		args.opts = append(args.opts, WithCommentFilter(v.Filter))
+	}
 	return args
 }
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
-func (m *MetaQuery) CollectFields(ctx context.Context, satisfies ...string) (*MetaQuery, error) {
+func (ga *GalleryQuery) CollectFields(ctx context.Context, satisfies ...string) (*GalleryQuery, error) {
 	fc := graphql.GetFieldContext(ctx)
 	if fc == nil {
-		return m, nil
+		return ga, nil
 	}
-	if err := m.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+	if err := ga.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
 		return nil, err
 	}
-	return m, nil
+	return ga, nil
 }
 
-func (m *MetaQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+func (ga *GalleryQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
 	path = append([]string(nil), path...)
 	return nil
 }
 
-type metaPaginateArgs struct {
+type galleryPaginateArgs struct {
 	first, last   *int
 	after, before *Cursor
-	opts          []MetaPaginateOption
+	opts          []GalleryPaginateOption
 }
 
-func newMetaPaginateArgs(rv map[string]interface{}) *metaPaginateArgs {
-	args := &metaPaginateArgs{}
+func newGalleryPaginateArgs(rv map[string]interface{}) *galleryPaginateArgs {
+	args := &galleryPaginateArgs{}
 	if rv == nil {
 		return args
 	}
@@ -184,7 +290,7 @@ func newMetaPaginateArgs(rv map[string]interface{}) *metaPaginateArgs {
 		case map[string]interface{}:
 			var (
 				err1, err2 error
-				order      = &MetaOrder{Field: &MetaOrderField{}}
+				order      = &GalleryOrder{Field: &GalleryOrderField{}}
 			)
 			if d, ok := v[directionField]; ok {
 				err1 = order.Direction.UnmarshalGQL(d)
@@ -193,13 +299,84 @@ func newMetaPaginateArgs(rv map[string]interface{}) *metaPaginateArgs {
 				err2 = order.Field.UnmarshalGQL(f)
 			}
 			if err1 == nil && err2 == nil {
-				args.opts = append(args.opts, WithMetaOrder(order))
+				args.opts = append(args.opts, WithGalleryOrder(order))
 			}
-		case *MetaOrder:
+		case *GalleryOrder:
 			if v != nil {
-				args.opts = append(args.opts, WithMetaOrder(v))
+				args.opts = append(args.opts, WithGalleryOrder(v))
 			}
 		}
+	}
+	if v, ok := rv[whereField].(*GalleryWhereInput); ok {
+		args.opts = append(args.opts, WithGalleryFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (m *MetadataQuery) CollectFields(ctx context.Context, satisfies ...string) (*MetadataQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return m, nil
+	}
+	if err := m.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (m *MetadataQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	return nil
+}
+
+type metadataPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []MetadataPaginateOption
+}
+
+func newMetadataPaginateArgs(rv map[string]interface{}) *metadataPaginateArgs {
+	args := &metadataPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]interface{}:
+			var (
+				err1, err2 error
+				order      = &MetadataOrder{Field: &MetadataOrderField{}}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithMetadataOrder(order))
+			}
+		case *MetadataOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithMetadataOrder(v))
+			}
+		}
+	}
+	if v, ok := rv[whereField].(*MetadataWhereInput); ok {
+		args.opts = append(args.opts, WithMetadataFilter(v.Filter))
 	}
 	return args
 }
@@ -266,6 +443,77 @@ func newNewsletterPaginateArgs(rv map[string]interface{}) *newsletterPaginateArg
 			}
 		}
 	}
+	if v, ok := rv[whereField].(*NewsletterWhereInput); ok {
+		args.opts = append(args.opts, WithNewsletterFilter(v.Filter))
+	}
+	return args
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (t *TagQuery) CollectFields(ctx context.Context, satisfies ...string) (*TagQuery, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return t, nil
+	}
+	if err := t.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+		return nil, err
+	}
+	return t, nil
+}
+
+func (t *TagQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+	path = append([]string(nil), path...)
+	return nil
+}
+
+type tagPaginateArgs struct {
+	first, last   *int
+	after, before *Cursor
+	opts          []TagPaginateOption
+}
+
+func newTagPaginateArgs(rv map[string]interface{}) *tagPaginateArgs {
+	args := &tagPaginateArgs{}
+	if rv == nil {
+		return args
+	}
+	if v := rv[firstField]; v != nil {
+		args.first = v.(*int)
+	}
+	if v := rv[lastField]; v != nil {
+		args.last = v.(*int)
+	}
+	if v := rv[afterField]; v != nil {
+		args.after = v.(*Cursor)
+	}
+	if v := rv[beforeField]; v != nil {
+		args.before = v.(*Cursor)
+	}
+	if v, ok := rv[orderByField]; ok {
+		switch v := v.(type) {
+		case map[string]interface{}:
+			var (
+				err1, err2 error
+				order      = &TagOrder{Field: &TagOrderField{}}
+			)
+			if d, ok := v[directionField]; ok {
+				err1 = order.Direction.UnmarshalGQL(d)
+			}
+			if f, ok := v[fieldField]; ok {
+				err2 = order.Field.UnmarshalGQL(f)
+			}
+			if err1 == nil && err2 == nil {
+				args.opts = append(args.opts, WithTagOrder(order))
+			}
+		case *TagOrder:
+			if v != nil {
+				args.opts = append(args.opts, WithTagOrder(v))
+			}
+		}
+	}
+	if v, ok := rv[whereField].(*TagWhereInput); ok {
+		args.opts = append(args.opts, WithTagFilter(v.Filter))
+	}
 	return args
 }
 
@@ -330,6 +578,9 @@ func newUserPaginateArgs(rv map[string]interface{}) *userPaginateArgs {
 				args.opts = append(args.opts, WithUserOrder(v))
 			}
 		}
+	}
+	if v, ok := rv[whereField].(*UserWhereInput); ok {
+		args.opts = append(args.opts, WithUserFilter(v.Filter))
 	}
 	return args
 }

@@ -49,6 +49,12 @@ func (nc *NewsletterCreate) SetNillableCreatedAt(t *time.Time) *NewsletterCreate
 	return nc
 }
 
+// SetMessage sets the "message" field.
+func (nc *NewsletterCreate) SetMessage(s string) *NewsletterCreate {
+	nc.mutation.SetMessage(s)
+	return nc
+}
+
 // SetID sets the "id" field.
 func (nc *NewsletterCreate) SetID(u uuid.UUID) *NewsletterCreate {
 	nc.mutation.SetID(u)
@@ -120,6 +126,14 @@ func (nc *NewsletterCreate) check() error {
 	if _, ok := nc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Newsletter.created_at"`)}
 	}
+	if _, ok := nc.mutation.Message(); !ok {
+		return &ValidationError{Name: "message", err: errors.New(`ent: missing required field "Newsletter.message"`)}
+	}
+	if v, ok := nc.mutation.Message(); ok {
+		if err := newsletter.MessageValidator(v); err != nil {
+			return &ValidationError{Name: "message", err: fmt.Errorf(`ent: validator failed for field "Newsletter.message": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -162,6 +176,10 @@ func (nc *NewsletterCreate) createSpec() (*Newsletter, *sqlgraph.CreateSpec) {
 	if value, ok := nc.mutation.CreatedAt(); ok {
 		_spec.SetField(newsletter.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
+	}
+	if value, ok := nc.mutation.Message(); ok {
+		_spec.SetField(newsletter.FieldMessage, field.TypeString, value)
+		_node.Message = value
 	}
 	return _node, _spec
 }

@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"app/ent/meta"
+	"app/ent/metadata"
 	"fmt"
 	"strings"
 	"time"
@@ -12,8 +12,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// Meta is the model entity for the Meta schema.
-type Meta struct {
+// Metadata is the model entity for the Metadata schema.
+type Metadata struct {
 	config `json:"-"`
 	// ID of the ent.
 	// The unique identifier of the entity.
@@ -22,86 +22,99 @@ type Meta struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// The time when the entity was created.
 	CreatedAt time.Time `json:"created_at,omitempty"`
+	// The website's title.
+	Title string `json:"title,omitempty"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Meta) scanValues(columns []string) ([]any, error) {
+func (*Metadata) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case meta.FieldUpdatedAt, meta.FieldCreatedAt:
+		case metadata.FieldTitle:
+			values[i] = new(sql.NullString)
+		case metadata.FieldUpdatedAt, metadata.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
-		case meta.FieldID:
+		case metadata.FieldID:
 			values[i] = new(uuid.UUID)
 		default:
-			return nil, fmt.Errorf("unexpected column %q for type Meta", columns[i])
+			return nil, fmt.Errorf("unexpected column %q for type Metadata", columns[i])
 		}
 	}
 	return values, nil
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the Meta fields.
-func (m *Meta) assignValues(columns []string, values []any) error {
+// to the Metadata fields.
+func (m *Metadata) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case meta.FieldID:
+		case metadata.FieldID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				m.ID = *value
 			}
-		case meta.FieldUpdatedAt:
+		case metadata.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				m.UpdatedAt = value.Time
 			}
-		case meta.FieldCreatedAt:
+		case metadata.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				m.CreatedAt = value.Time
+			}
+		case metadata.FieldTitle:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field title", values[i])
+			} else if value.Valid {
+				m.Title = value.String
 			}
 		}
 	}
 	return nil
 }
 
-// Update returns a builder for updating this Meta.
-// Note that you need to call Meta.Unwrap() before calling this method if this Meta
+// Update returns a builder for updating this Metadata.
+// Note that you need to call Metadata.Unwrap() before calling this method if this Metadata
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (m *Meta) Update() *MetaUpdateOne {
-	return NewMetaClient(m.config).UpdateOne(m)
+func (m *Metadata) Update() *MetadataUpdateOne {
+	return NewMetadataClient(m.config).UpdateOne(m)
 }
 
-// Unwrap unwraps the Meta entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the Metadata entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (m *Meta) Unwrap() *Meta {
+func (m *Metadata) Unwrap() *Metadata {
 	_tx, ok := m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: Meta is not a transactional entity")
+		panic("ent: Metadata is not a transactional entity")
 	}
 	m.config.driver = _tx.drv
 	return m
 }
 
 // String implements the fmt.Stringer.
-func (m *Meta) String() string {
+func (m *Metadata) String() string {
 	var builder strings.Builder
-	builder.WriteString("Meta(")
+	builder.WriteString("Metadata(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", m.ID))
 	builder.WriteString("updated_at=")
 	builder.WriteString(m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("title=")
+	builder.WriteString(m.Title)
 	builder.WriteByte(')')
 	return builder.String()
 }
 
-// MetaSlice is a parsable slice of Meta.
-type MetaSlice []*Meta
+// MetadataSlice is a parsable slice of Metadata.
+type MetadataSlice []*Metadata

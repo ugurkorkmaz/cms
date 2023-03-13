@@ -18,10 +18,10 @@ type Comment struct {
 	// ID of the ent.
 	// The unique identifier of the entity.
 	ID uuid.UUID `json:"id,omitempty"`
-	// The time when the entity was updated.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// The time when the entity was created.
 	CreatedAt time.Time `json:"created_at,omitempty"`
+	// The comment's content.
+	Content string `json:"content,omitempty"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -29,7 +29,9 @@ func (*Comment) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case comment.FieldUpdatedAt, comment.FieldCreatedAt:
+		case comment.FieldContent:
+			values[i] = new(sql.NullString)
+		case comment.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
 		case comment.FieldID:
 			values[i] = new(uuid.UUID)
@@ -54,17 +56,17 @@ func (c *Comment) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				c.ID = *value
 			}
-		case comment.FieldUpdatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
-			} else if value.Valid {
-				c.UpdatedAt = value.Time
-			}
 		case comment.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				c.CreatedAt = value.Time
+			}
+		case comment.FieldContent:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field content", values[i])
+			} else if value.Valid {
+				c.Content = value.String
 			}
 		}
 	}
@@ -94,11 +96,11 @@ func (c *Comment) String() string {
 	var builder strings.Builder
 	builder.WriteString("Comment(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", c.ID))
-	builder.WriteString("updated_at=")
-	builder.WriteString(c.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(c.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("content=")
+	builder.WriteString(c.Content)
 	builder.WriteByte(')')
 	return builder.String()
 }

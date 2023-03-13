@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"app/ent/meta"
+	"app/ent/metadata"
 	"context"
 	"errors"
 	"fmt"
@@ -14,21 +14,21 @@ import (
 	"github.com/google/uuid"
 )
 
-// MetaCreate is the builder for creating a Meta entity.
-type MetaCreate struct {
+// MetadataCreate is the builder for creating a Metadata entity.
+type MetadataCreate struct {
 	config
-	mutation *MetaMutation
+	mutation *MetadataMutation
 	hooks    []Hook
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (mc *MetaCreate) SetUpdatedAt(t time.Time) *MetaCreate {
+func (mc *MetadataCreate) SetUpdatedAt(t time.Time) *MetadataCreate {
 	mc.mutation.SetUpdatedAt(t)
 	return mc
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (mc *MetaCreate) SetNillableUpdatedAt(t *time.Time) *MetaCreate {
+func (mc *MetadataCreate) SetNillableUpdatedAt(t *time.Time) *MetadataCreate {
 	if t != nil {
 		mc.SetUpdatedAt(*t)
 	}
@@ -36,46 +36,52 @@ func (mc *MetaCreate) SetNillableUpdatedAt(t *time.Time) *MetaCreate {
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (mc *MetaCreate) SetCreatedAt(t time.Time) *MetaCreate {
+func (mc *MetadataCreate) SetCreatedAt(t time.Time) *MetadataCreate {
 	mc.mutation.SetCreatedAt(t)
 	return mc
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (mc *MetaCreate) SetNillableCreatedAt(t *time.Time) *MetaCreate {
+func (mc *MetadataCreate) SetNillableCreatedAt(t *time.Time) *MetadataCreate {
 	if t != nil {
 		mc.SetCreatedAt(*t)
 	}
 	return mc
 }
 
+// SetTitle sets the "title" field.
+func (mc *MetadataCreate) SetTitle(s string) *MetadataCreate {
+	mc.mutation.SetTitle(s)
+	return mc
+}
+
 // SetID sets the "id" field.
-func (mc *MetaCreate) SetID(u uuid.UUID) *MetaCreate {
+func (mc *MetadataCreate) SetID(u uuid.UUID) *MetadataCreate {
 	mc.mutation.SetID(u)
 	return mc
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (mc *MetaCreate) SetNillableID(u *uuid.UUID) *MetaCreate {
+func (mc *MetadataCreate) SetNillableID(u *uuid.UUID) *MetadataCreate {
 	if u != nil {
 		mc.SetID(*u)
 	}
 	return mc
 }
 
-// Mutation returns the MetaMutation object of the builder.
-func (mc *MetaCreate) Mutation() *MetaMutation {
+// Mutation returns the MetadataMutation object of the builder.
+func (mc *MetadataCreate) Mutation() *MetadataMutation {
 	return mc.mutation
 }
 
-// Save creates the Meta in the database.
-func (mc *MetaCreate) Save(ctx context.Context) (*Meta, error) {
+// Save creates the Metadata in the database.
+func (mc *MetadataCreate) Save(ctx context.Context) (*Metadata, error) {
 	mc.defaults()
-	return withHooks[*Meta, MetaMutation](ctx, mc.sqlSave, mc.mutation, mc.hooks)
+	return withHooks[*Metadata, MetadataMutation](ctx, mc.sqlSave, mc.mutation, mc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (mc *MetaCreate) SaveX(ctx context.Context) *Meta {
+func (mc *MetadataCreate) SaveX(ctx context.Context) *Metadata {
 	v, err := mc.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -84,46 +90,54 @@ func (mc *MetaCreate) SaveX(ctx context.Context) *Meta {
 }
 
 // Exec executes the query.
-func (mc *MetaCreate) Exec(ctx context.Context) error {
+func (mc *MetadataCreate) Exec(ctx context.Context) error {
 	_, err := mc.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mc *MetaCreate) ExecX(ctx context.Context) {
+func (mc *MetadataCreate) ExecX(ctx context.Context) {
 	if err := mc.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (mc *MetaCreate) defaults() {
+func (mc *MetadataCreate) defaults() {
 	if _, ok := mc.mutation.UpdatedAt(); !ok {
-		v := meta.DefaultUpdatedAt()
+		v := metadata.DefaultUpdatedAt()
 		mc.mutation.SetUpdatedAt(v)
 	}
 	if _, ok := mc.mutation.CreatedAt(); !ok {
-		v := meta.DefaultCreatedAt()
+		v := metadata.DefaultCreatedAt()
 		mc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := mc.mutation.ID(); !ok {
-		v := meta.DefaultID()
+		v := metadata.DefaultID()
 		mc.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (mc *MetaCreate) check() error {
+func (mc *MetadataCreate) check() error {
 	if _, ok := mc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Meta.updated_at"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Metadata.updated_at"`)}
 	}
 	if _, ok := mc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Meta.created_at"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Metadata.created_at"`)}
+	}
+	if _, ok := mc.mutation.Title(); !ok {
+		return &ValidationError{Name: "title", err: errors.New(`ent: missing required field "Metadata.title"`)}
+	}
+	if v, ok := mc.mutation.Title(); ok {
+		if err := metadata.TitleValidator(v); err != nil {
+			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Metadata.title": %w`, err)}
+		}
 	}
 	return nil
 }
 
-func (mc *MetaCreate) sqlSave(ctx context.Context) (*Meta, error) {
+func (mc *MetadataCreate) sqlSave(ctx context.Context) (*Metadata, error) {
 	if err := mc.check(); err != nil {
 		return nil, err
 	}
@@ -146,43 +160,47 @@ func (mc *MetaCreate) sqlSave(ctx context.Context) (*Meta, error) {
 	return _node, nil
 }
 
-func (mc *MetaCreate) createSpec() (*Meta, *sqlgraph.CreateSpec) {
+func (mc *MetadataCreate) createSpec() (*Metadata, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Meta{config: mc.config}
-		_spec = sqlgraph.NewCreateSpec(meta.Table, sqlgraph.NewFieldSpec(meta.FieldID, field.TypeUUID))
+		_node = &Metadata{config: mc.config}
+		_spec = sqlgraph.NewCreateSpec(metadata.Table, sqlgraph.NewFieldSpec(metadata.FieldID, field.TypeUUID))
 	)
 	if id, ok := mc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
 	if value, ok := mc.mutation.UpdatedAt(); ok {
-		_spec.SetField(meta.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(metadata.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if value, ok := mc.mutation.CreatedAt(); ok {
-		_spec.SetField(meta.FieldCreatedAt, field.TypeTime, value)
+		_spec.SetField(metadata.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
+	}
+	if value, ok := mc.mutation.Title(); ok {
+		_spec.SetField(metadata.FieldTitle, field.TypeString, value)
+		_node.Title = value
 	}
 	return _node, _spec
 }
 
-// MetaCreateBulk is the builder for creating many Meta entities in bulk.
-type MetaCreateBulk struct {
+// MetadataCreateBulk is the builder for creating many Metadata entities in bulk.
+type MetadataCreateBulk struct {
 	config
-	builders []*MetaCreate
+	builders []*MetadataCreate
 }
 
-// Save creates the Meta entities in the database.
-func (mcb *MetaCreateBulk) Save(ctx context.Context) ([]*Meta, error) {
+// Save creates the Metadata entities in the database.
+func (mcb *MetadataCreateBulk) Save(ctx context.Context) ([]*Metadata, error) {
 	specs := make([]*sqlgraph.CreateSpec, len(mcb.builders))
-	nodes := make([]*Meta, len(mcb.builders))
+	nodes := make([]*Metadata, len(mcb.builders))
 	mutators := make([]Mutator, len(mcb.builders))
 	for i := range mcb.builders {
 		func(i int, root context.Context) {
 			builder := mcb.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-				mutation, ok := m.(*MetaMutation)
+				mutation, ok := m.(*MetadataMutation)
 				if !ok {
 					return nil, fmt.Errorf("unexpected mutation type %T", m)
 				}
@@ -225,7 +243,7 @@ func (mcb *MetaCreateBulk) Save(ctx context.Context) ([]*Meta, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (mcb *MetaCreateBulk) SaveX(ctx context.Context) []*Meta {
+func (mcb *MetadataCreateBulk) SaveX(ctx context.Context) []*Metadata {
 	v, err := mcb.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -234,13 +252,13 @@ func (mcb *MetaCreateBulk) SaveX(ctx context.Context) []*Meta {
 }
 
 // Exec executes the query.
-func (mcb *MetaCreateBulk) Exec(ctx context.Context) error {
+func (mcb *MetadataCreateBulk) Exec(ctx context.Context) error {
 	_, err := mcb.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mcb *MetaCreateBulk) ExecX(ctx context.Context) {
+func (mcb *MetadataCreateBulk) ExecX(ctx context.Context) {
 	if err := mcb.Exec(ctx); err != nil {
 		panic(err)
 	}

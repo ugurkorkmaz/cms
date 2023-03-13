@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"app/ent/meta"
+	"app/ent/metadata"
 	"app/ent/predicate"
 	"context"
 	"fmt"
@@ -15,66 +15,66 @@ import (
 	"github.com/google/uuid"
 )
 
-// MetaQuery is the builder for querying Meta entities.
-type MetaQuery struct {
+// MetadataQuery is the builder for querying Metadata entities.
+type MetadataQuery struct {
 	config
 	ctx        *QueryContext
 	order      []OrderFunc
 	inters     []Interceptor
-	predicates []predicate.Meta
+	predicates []predicate.Metadata
 	modifiers  []func(*sql.Selector)
-	loadTotal  []func(context.Context, []*Meta) error
+	loadTotal  []func(context.Context, []*Metadata) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the MetaQuery builder.
-func (mq *MetaQuery) Where(ps ...predicate.Meta) *MetaQuery {
+// Where adds a new predicate for the MetadataQuery builder.
+func (mq *MetadataQuery) Where(ps ...predicate.Metadata) *MetadataQuery {
 	mq.predicates = append(mq.predicates, ps...)
 	return mq
 }
 
 // Limit the number of records to be returned by this query.
-func (mq *MetaQuery) Limit(limit int) *MetaQuery {
+func (mq *MetadataQuery) Limit(limit int) *MetadataQuery {
 	mq.ctx.Limit = &limit
 	return mq
 }
 
 // Offset to start from.
-func (mq *MetaQuery) Offset(offset int) *MetaQuery {
+func (mq *MetadataQuery) Offset(offset int) *MetadataQuery {
 	mq.ctx.Offset = &offset
 	return mq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (mq *MetaQuery) Unique(unique bool) *MetaQuery {
+func (mq *MetadataQuery) Unique(unique bool) *MetadataQuery {
 	mq.ctx.Unique = &unique
 	return mq
 }
 
 // Order specifies how the records should be ordered.
-func (mq *MetaQuery) Order(o ...OrderFunc) *MetaQuery {
+func (mq *MetadataQuery) Order(o ...OrderFunc) *MetadataQuery {
 	mq.order = append(mq.order, o...)
 	return mq
 }
 
-// First returns the first Meta entity from the query.
-// Returns a *NotFoundError when no Meta was found.
-func (mq *MetaQuery) First(ctx context.Context) (*Meta, error) {
+// First returns the first Metadata entity from the query.
+// Returns a *NotFoundError when no Metadata was found.
+func (mq *MetadataQuery) First(ctx context.Context) (*Metadata, error) {
 	nodes, err := mq.Limit(1).All(setContextOp(ctx, mq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{meta.Label}
+		return nil, &NotFoundError{metadata.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (mq *MetaQuery) FirstX(ctx context.Context) *Meta {
+func (mq *MetadataQuery) FirstX(ctx context.Context) *Metadata {
 	node, err := mq.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -82,22 +82,22 @@ func (mq *MetaQuery) FirstX(ctx context.Context) *Meta {
 	return node
 }
 
-// FirstID returns the first Meta ID from the query.
-// Returns a *NotFoundError when no Meta ID was found.
-func (mq *MetaQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first Metadata ID from the query.
+// Returns a *NotFoundError when no Metadata ID was found.
+func (mq *MetadataQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = mq.Limit(1).IDs(setContextOp(ctx, mq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{meta.Label}
+		err = &NotFoundError{metadata.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (mq *MetaQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (mq *MetadataQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := mq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -105,10 +105,10 @@ func (mq *MetaQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single Meta entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Meta entity is found.
-// Returns a *NotFoundError when no Meta entities are found.
-func (mq *MetaQuery) Only(ctx context.Context) (*Meta, error) {
+// Only returns a single Metadata entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Metadata entity is found.
+// Returns a *NotFoundError when no Metadata entities are found.
+func (mq *MetadataQuery) Only(ctx context.Context) (*Metadata, error) {
 	nodes, err := mq.Limit(2).All(setContextOp(ctx, mq.ctx, "Only"))
 	if err != nil {
 		return nil, err
@@ -117,14 +117,14 @@ func (mq *MetaQuery) Only(ctx context.Context) (*Meta, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{meta.Label}
+		return nil, &NotFoundError{metadata.Label}
 	default:
-		return nil, &NotSingularError{meta.Label}
+		return nil, &NotSingularError{metadata.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (mq *MetaQuery) OnlyX(ctx context.Context) *Meta {
+func (mq *MetadataQuery) OnlyX(ctx context.Context) *Metadata {
 	node, err := mq.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -132,10 +132,10 @@ func (mq *MetaQuery) OnlyX(ctx context.Context) *Meta {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Meta ID in the query.
-// Returns a *NotSingularError when more than one Meta ID is found.
+// OnlyID is like Only, but returns the only Metadata ID in the query.
+// Returns a *NotSingularError when more than one Metadata ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (mq *MetaQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (mq *MetadataQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = mq.Limit(2).IDs(setContextOp(ctx, mq.ctx, "OnlyID")); err != nil {
 		return
@@ -144,15 +144,15 @@ func (mq *MetaQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{meta.Label}
+		err = &NotFoundError{metadata.Label}
 	default:
-		err = &NotSingularError{meta.Label}
+		err = &NotSingularError{metadata.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (mq *MetaQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (mq *MetadataQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := mq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -160,18 +160,18 @@ func (mq *MetaQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of MetaSlice.
-func (mq *MetaQuery) All(ctx context.Context) ([]*Meta, error) {
+// All executes the query and returns a list of MetadataSlice.
+func (mq *MetadataQuery) All(ctx context.Context) ([]*Metadata, error) {
 	ctx = setContextOp(ctx, mq.ctx, "All")
 	if err := mq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Meta, *MetaQuery]()
-	return withInterceptors[[]*Meta](ctx, mq, qr, mq.inters)
+	qr := querierAll[[]*Metadata, *MetadataQuery]()
+	return withInterceptors[[]*Metadata](ctx, mq, qr, mq.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (mq *MetaQuery) AllX(ctx context.Context) []*Meta {
+func (mq *MetadataQuery) AllX(ctx context.Context) []*Metadata {
 	nodes, err := mq.All(ctx)
 	if err != nil {
 		panic(err)
@@ -179,20 +179,20 @@ func (mq *MetaQuery) AllX(ctx context.Context) []*Meta {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Meta IDs.
-func (mq *MetaQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of Metadata IDs.
+func (mq *MetadataQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if mq.ctx.Unique == nil && mq.path != nil {
 		mq.Unique(true)
 	}
 	ctx = setContextOp(ctx, mq.ctx, "IDs")
-	if err = mq.Select(meta.FieldID).Scan(ctx, &ids); err != nil {
+	if err = mq.Select(metadata.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (mq *MetaQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (mq *MetadataQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := mq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -201,16 +201,16 @@ func (mq *MetaQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (mq *MetaQuery) Count(ctx context.Context) (int, error) {
+func (mq *MetadataQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, mq.ctx, "Count")
 	if err := mq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, mq, querierCount[*MetaQuery](), mq.inters)
+	return withInterceptors[int](ctx, mq, querierCount[*MetadataQuery](), mq.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (mq *MetaQuery) CountX(ctx context.Context) int {
+func (mq *MetadataQuery) CountX(ctx context.Context) int {
 	count, err := mq.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -219,7 +219,7 @@ func (mq *MetaQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (mq *MetaQuery) Exist(ctx context.Context) (bool, error) {
+func (mq *MetadataQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, mq.ctx, "Exist")
 	switch _, err := mq.FirstID(ctx); {
 	case IsNotFound(err):
@@ -232,7 +232,7 @@ func (mq *MetaQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (mq *MetaQuery) ExistX(ctx context.Context) bool {
+func (mq *MetadataQuery) ExistX(ctx context.Context) bool {
 	exist, err := mq.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -240,18 +240,18 @@ func (mq *MetaQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the MetaQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the MetadataQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (mq *MetaQuery) Clone() *MetaQuery {
+func (mq *MetadataQuery) Clone() *MetadataQuery {
 	if mq == nil {
 		return nil
 	}
-	return &MetaQuery{
+	return &MetadataQuery{
 		config:     mq.config,
 		ctx:        mq.ctx.Clone(),
 		order:      append([]OrderFunc{}, mq.order...),
 		inters:     append([]Interceptor{}, mq.inters...),
-		predicates: append([]predicate.Meta{}, mq.predicates...),
+		predicates: append([]predicate.Metadata{}, mq.predicates...),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
@@ -268,15 +268,15 @@ func (mq *MetaQuery) Clone() *MetaQuery {
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Meta.Query().
-//		GroupBy(meta.FieldUpdatedAt).
+//	client.Metadata.Query().
+//		GroupBy(metadata.FieldUpdatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (mq *MetaQuery) GroupBy(field string, fields ...string) *MetaGroupBy {
+func (mq *MetadataQuery) GroupBy(field string, fields ...string) *MetadataGroupBy {
 	mq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &MetaGroupBy{build: mq}
+	grbuild := &MetadataGroupBy{build: mq}
 	grbuild.flds = &mq.ctx.Fields
-	grbuild.label = meta.Label
+	grbuild.label = metadata.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -290,23 +290,23 @@ func (mq *MetaQuery) GroupBy(field string, fields ...string) *MetaGroupBy {
 //		UpdatedAt time.Time `json:"updated_at,omitempty"`
 //	}
 //
-//	client.Meta.Query().
-//		Select(meta.FieldUpdatedAt).
+//	client.Metadata.Query().
+//		Select(metadata.FieldUpdatedAt).
 //		Scan(ctx, &v)
-func (mq *MetaQuery) Select(fields ...string) *MetaSelect {
+func (mq *MetadataQuery) Select(fields ...string) *MetadataSelect {
 	mq.ctx.Fields = append(mq.ctx.Fields, fields...)
-	sbuild := &MetaSelect{MetaQuery: mq}
-	sbuild.label = meta.Label
+	sbuild := &MetadataSelect{MetadataQuery: mq}
+	sbuild.label = metadata.Label
 	sbuild.flds, sbuild.scan = &mq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a MetaSelect configured with the given aggregations.
-func (mq *MetaQuery) Aggregate(fns ...AggregateFunc) *MetaSelect {
+// Aggregate returns a MetadataSelect configured with the given aggregations.
+func (mq *MetadataQuery) Aggregate(fns ...AggregateFunc) *MetadataSelect {
 	return mq.Select().Aggregate(fns...)
 }
 
-func (mq *MetaQuery) prepareQuery(ctx context.Context) error {
+func (mq *MetadataQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range mq.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -318,7 +318,7 @@ func (mq *MetaQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range mq.ctx.Fields {
-		if !meta.ValidColumn(f) {
+		if !metadata.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -332,16 +332,16 @@ func (mq *MetaQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (mq *MetaQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Meta, error) {
+func (mq *MetadataQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Metadata, error) {
 	var (
-		nodes = []*Meta{}
+		nodes = []*Metadata{}
 		_spec = mq.querySpec()
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Meta).scanValues(nil, columns)
+		return (*Metadata).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Meta{config: mq.config}
+		node := &Metadata{config: mq.config}
 		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
 	}
@@ -365,7 +365,7 @@ func (mq *MetaQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Meta, e
 	return nodes, nil
 }
 
-func (mq *MetaQuery) sqlCount(ctx context.Context) (int, error) {
+func (mq *MetadataQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := mq.querySpec()
 	if len(mq.modifiers) > 0 {
 		_spec.Modifiers = mq.modifiers
@@ -377,8 +377,8 @@ func (mq *MetaQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, mq.driver, _spec)
 }
 
-func (mq *MetaQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(meta.Table, meta.Columns, sqlgraph.NewFieldSpec(meta.FieldID, field.TypeUUID))
+func (mq *MetadataQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(metadata.Table, metadata.Columns, sqlgraph.NewFieldSpec(metadata.FieldID, field.TypeUUID))
 	_spec.From = mq.sql
 	if unique := mq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -387,9 +387,9 @@ func (mq *MetaQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := mq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, meta.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, metadata.FieldID)
 		for i := range fields {
-			if fields[i] != meta.FieldID {
+			if fields[i] != metadata.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -417,12 +417,12 @@ func (mq *MetaQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (mq *MetaQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (mq *MetadataQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(mq.driver.Dialect())
-	t1 := builder.Table(meta.Table)
+	t1 := builder.Table(metadata.Table)
 	columns := mq.ctx.Fields
 	if len(columns) == 0 {
-		columns = meta.Columns
+		columns = metadata.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if mq.sql != nil {
@@ -449,28 +449,28 @@ func (mq *MetaQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// MetaGroupBy is the group-by builder for Meta entities.
-type MetaGroupBy struct {
+// MetadataGroupBy is the group-by builder for Metadata entities.
+type MetadataGroupBy struct {
 	selector
-	build *MetaQuery
+	build *MetadataQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (mgb *MetaGroupBy) Aggregate(fns ...AggregateFunc) *MetaGroupBy {
+func (mgb *MetadataGroupBy) Aggregate(fns ...AggregateFunc) *MetadataGroupBy {
 	mgb.fns = append(mgb.fns, fns...)
 	return mgb
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (mgb *MetaGroupBy) Scan(ctx context.Context, v any) error {
+func (mgb *MetadataGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, mgb.build.ctx, "GroupBy")
 	if err := mgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*MetaQuery, *MetaGroupBy](ctx, mgb.build, mgb, mgb.build.inters, v)
+	return scanWithInterceptors[*MetadataQuery, *MetadataGroupBy](ctx, mgb.build, mgb, mgb.build.inters, v)
 }
 
-func (mgb *MetaGroupBy) sqlScan(ctx context.Context, root *MetaQuery, v any) error {
+func (mgb *MetadataGroupBy) sqlScan(ctx context.Context, root *MetadataQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(mgb.fns))
 	for _, fn := range mgb.fns {
@@ -497,28 +497,28 @@ func (mgb *MetaGroupBy) sqlScan(ctx context.Context, root *MetaQuery, v any) err
 	return sql.ScanSlice(rows, v)
 }
 
-// MetaSelect is the builder for selecting fields of Meta entities.
-type MetaSelect struct {
-	*MetaQuery
+// MetadataSelect is the builder for selecting fields of Metadata entities.
+type MetadataSelect struct {
+	*MetadataQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (ms *MetaSelect) Aggregate(fns ...AggregateFunc) *MetaSelect {
+func (ms *MetadataSelect) Aggregate(fns ...AggregateFunc) *MetadataSelect {
 	ms.fns = append(ms.fns, fns...)
 	return ms
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (ms *MetaSelect) Scan(ctx context.Context, v any) error {
+func (ms *MetadataSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, ms.ctx, "Select")
 	if err := ms.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*MetaQuery, *MetaSelect](ctx, ms.MetaQuery, ms, ms.inters, v)
+	return scanWithInterceptors[*MetadataQuery, *MetadataSelect](ctx, ms.MetadataQuery, ms, ms.inters, v)
 }
 
-func (ms *MetaSelect) sqlScan(ctx context.Context, root *MetaQuery, v any) error {
+func (ms *MetadataSelect) sqlScan(ctx context.Context, root *MetadataQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(ms.fns))
 	for _, fn := range ms.fns {

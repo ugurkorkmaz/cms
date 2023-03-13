@@ -9,14 +9,23 @@ import (
 // Article is the predicate function for article builders.
 type Article func(*sql.Selector)
 
+// Category is the predicate function for category builders.
+type Category func(*sql.Selector)
+
 // Comment is the predicate function for comment builders.
 type Comment func(*sql.Selector)
 
-// Meta is the predicate function for meta builders.
-type Meta func(*sql.Selector)
+// Gallery is the predicate function for gallery builders.
+type Gallery func(*sql.Selector)
+
+// Metadata is the predicate function for metadata builders.
+type Metadata func(*sql.Selector)
 
 // Newsletter is the predicate function for newsletter builders.
 type Newsletter func(*sql.Selector)
+
+// Tag is the predicate function for tag builders.
+type Tag func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

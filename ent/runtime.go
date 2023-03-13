@@ -4,10 +4,13 @@ package ent
 
 import (
 	"app/ent/article"
+	"app/ent/category"
 	"app/ent/comment"
-	"app/ent/meta"
+	"app/ent/gallery"
+	"app/ent/metadata"
 	"app/ent/newsletter"
 	"app/ent/schema"
+	"app/ent/tag"
 	"app/ent/user"
 	"time"
 
@@ -21,72 +24,242 @@ func init() {
 	articleMixin := schema.Article{}.Mixin()
 	articleMixinFields0 := articleMixin[0].Fields()
 	_ = articleMixinFields0
-	articleMixinFields1 := articleMixin[1].Fields()
-	_ = articleMixinFields1
-	articleMixinFields2 := articleMixin[2].Fields()
-	_ = articleMixinFields2
 	articleFields := schema.Article{}.Fields()
 	_ = articleFields
-	// articleDescUpdatedAt is the schema descriptor for updated_at field.
-	articleDescUpdatedAt := articleMixinFields1[0].Descriptor()
-	// article.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	article.DefaultUpdatedAt = articleDescUpdatedAt.Default.(func() time.Time)
-	// article.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	article.UpdateDefaultUpdatedAt = articleDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// articleDescCreatedAt is the schema descriptor for created_at field.
-	articleDescCreatedAt := articleMixinFields2[0].Descriptor()
-	// article.DefaultCreatedAt holds the default value on creation for the created_at field.
-	article.DefaultCreatedAt = articleDescCreatedAt.Default.(func() time.Time)
+	// articleDescTitle is the schema descriptor for title field.
+	articleDescTitle := articleFields[0].Descriptor()
+	// article.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	article.TitleValidator = func() func(string) error {
+		validators := articleDescTitle.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+			validators[2].(func(string) error),
+		}
+		return func(title string) error {
+			for _, fn := range fns {
+				if err := fn(title); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// articleDescSlug is the schema descriptor for slug field.
+	articleDescSlug := articleFields[1].Descriptor()
+	// article.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
+	article.SlugValidator = func() func(string) error {
+		validators := articleDescSlug.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+			validators[2].(func(string) error),
+		}
+		return func(slug string) error {
+			for _, fn := range fns {
+				if err := fn(slug); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// articleDescDescription is the schema descriptor for description field.
+	articleDescDescription := articleFields[2].Descriptor()
+	// article.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	article.DescriptionValidator = func() func(string) error {
+		validators := articleDescDescription.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(description string) error {
+			for _, fn := range fns {
+				if err := fn(description); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// articleDescContent is the schema descriptor for content field.
+	articleDescContent := articleFields[3].Descriptor()
+	// article.ContentValidator is a validator for the "content" field. It is called by the builders before save.
+	article.ContentValidator = func() func(string) error {
+		validators := articleDescContent.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(content string) error {
+			for _, fn := range fns {
+				if err := fn(content); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// articleDescID is the schema descriptor for id field.
 	articleDescID := articleMixinFields0[0].Descriptor()
 	// article.DefaultID holds the default value on creation for the id field.
 	article.DefaultID = articleDescID.Default.(func() uuid.UUID)
+	categoryMixin := schema.Category{}.Mixin()
+	categoryMixinFields0 := categoryMixin[0].Fields()
+	_ = categoryMixinFields0
+	categoryMixinFields1 := categoryMixin[1].Fields()
+	_ = categoryMixinFields1
+	categoryMixinFields2 := categoryMixin[2].Fields()
+	_ = categoryMixinFields2
+	categoryFields := schema.Category{}.Fields()
+	_ = categoryFields
+	// categoryDescCreatedAt is the schema descriptor for created_at field.
+	categoryDescCreatedAt := categoryMixinFields1[0].Descriptor()
+	// category.DefaultCreatedAt holds the default value on creation for the created_at field.
+	category.DefaultCreatedAt = categoryDescCreatedAt.Default.(func() time.Time)
+	// categoryDescUpdatedAt is the schema descriptor for updated_at field.
+	categoryDescUpdatedAt := categoryMixinFields2[0].Descriptor()
+	// category.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	category.DefaultUpdatedAt = categoryDescUpdatedAt.Default.(func() time.Time)
+	// category.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	category.UpdateDefaultUpdatedAt = categoryDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// categoryDescName is the schema descriptor for name field.
+	categoryDescName := categoryFields[0].Descriptor()
+	// category.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	category.NameValidator = func() func(string) error {
+		validators := categoryDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// categoryDescID is the schema descriptor for id field.
+	categoryDescID := categoryMixinFields0[0].Descriptor()
+	// category.DefaultID holds the default value on creation for the id field.
+	category.DefaultID = categoryDescID.Default.(func() uuid.UUID)
 	commentMixin := schema.Comment{}.Mixin()
 	commentMixinFields0 := commentMixin[0].Fields()
 	_ = commentMixinFields0
 	commentMixinFields1 := commentMixin[1].Fields()
 	_ = commentMixinFields1
-	commentMixinFields2 := commentMixin[2].Fields()
-	_ = commentMixinFields2
 	commentFields := schema.Comment{}.Fields()
 	_ = commentFields
-	// commentDescUpdatedAt is the schema descriptor for updated_at field.
-	commentDescUpdatedAt := commentMixinFields1[0].Descriptor()
-	// comment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	comment.DefaultUpdatedAt = commentDescUpdatedAt.Default.(func() time.Time)
-	// comment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	comment.UpdateDefaultUpdatedAt = commentDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// commentDescCreatedAt is the schema descriptor for created_at field.
-	commentDescCreatedAt := commentMixinFields2[0].Descriptor()
+	commentDescCreatedAt := commentMixinFields1[0].Descriptor()
 	// comment.DefaultCreatedAt holds the default value on creation for the created_at field.
 	comment.DefaultCreatedAt = commentDescCreatedAt.Default.(func() time.Time)
+	// commentDescContent is the schema descriptor for content field.
+	commentDescContent := commentFields[0].Descriptor()
+	// comment.ContentValidator is a validator for the "content" field. It is called by the builders before save.
+	comment.ContentValidator = func() func(string) error {
+		validators := commentDescContent.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(content string) error {
+			for _, fn := range fns {
+				if err := fn(content); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// commentDescID is the schema descriptor for id field.
 	commentDescID := commentMixinFields0[0].Descriptor()
 	// comment.DefaultID holds the default value on creation for the id field.
 	comment.DefaultID = commentDescID.Default.(func() uuid.UUID)
-	metaMixin := schema.Meta{}.Mixin()
-	metaMixinFields0 := metaMixin[0].Fields()
-	_ = metaMixinFields0
-	metaMixinFields1 := metaMixin[1].Fields()
-	_ = metaMixinFields1
-	metaMixinFields2 := metaMixin[2].Fields()
-	_ = metaMixinFields2
-	metaFields := schema.Meta{}.Fields()
-	_ = metaFields
-	// metaDescUpdatedAt is the schema descriptor for updated_at field.
-	metaDescUpdatedAt := metaMixinFields1[0].Descriptor()
-	// meta.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	meta.DefaultUpdatedAt = metaDescUpdatedAt.Default.(func() time.Time)
-	// meta.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	meta.UpdateDefaultUpdatedAt = metaDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// metaDescCreatedAt is the schema descriptor for created_at field.
-	metaDescCreatedAt := metaMixinFields2[0].Descriptor()
-	// meta.DefaultCreatedAt holds the default value on creation for the created_at field.
-	meta.DefaultCreatedAt = metaDescCreatedAt.Default.(func() time.Time)
-	// metaDescID is the schema descriptor for id field.
-	metaDescID := metaMixinFields0[0].Descriptor()
-	// meta.DefaultID holds the default value on creation for the id field.
-	meta.DefaultID = metaDescID.Default.(func() uuid.UUID)
+	galleryMixin := schema.Gallery{}.Mixin()
+	galleryMixinFields0 := galleryMixin[0].Fields()
+	_ = galleryMixinFields0
+	galleryMixinFields1 := galleryMixin[1].Fields()
+	_ = galleryMixinFields1
+	galleryMixinFields2 := galleryMixin[2].Fields()
+	_ = galleryMixinFields2
+	galleryFields := schema.Gallery{}.Fields()
+	_ = galleryFields
+	// galleryDescCreatedAt is the schema descriptor for created_at field.
+	galleryDescCreatedAt := galleryMixinFields1[0].Descriptor()
+	// gallery.DefaultCreatedAt holds the default value on creation for the created_at field.
+	gallery.DefaultCreatedAt = galleryDescCreatedAt.Default.(func() time.Time)
+	// galleryDescUpdatedAt is the schema descriptor for updated_at field.
+	galleryDescUpdatedAt := galleryMixinFields2[0].Descriptor()
+	// gallery.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	gallery.DefaultUpdatedAt = galleryDescUpdatedAt.Default.(func() time.Time)
+	// gallery.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	gallery.UpdateDefaultUpdatedAt = galleryDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// galleryDescName is the schema descriptor for name field.
+	galleryDescName := galleryFields[0].Descriptor()
+	// gallery.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	gallery.NameValidator = func() func(string) error {
+		validators := galleryDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// galleryDescID is the schema descriptor for id field.
+	galleryDescID := galleryMixinFields0[0].Descriptor()
+	// gallery.DefaultID holds the default value on creation for the id field.
+	gallery.DefaultID = galleryDescID.Default.(func() uuid.UUID)
+	metadataMixin := schema.Metadata{}.Mixin()
+	metadataMixinFields0 := metadataMixin[0].Fields()
+	_ = metadataMixinFields0
+	metadataMixinFields1 := metadataMixin[1].Fields()
+	_ = metadataMixinFields1
+	metadataMixinFields2 := metadataMixin[2].Fields()
+	_ = metadataMixinFields2
+	metadataFields := schema.Metadata{}.Fields()
+	_ = metadataFields
+	// metadataDescUpdatedAt is the schema descriptor for updated_at field.
+	metadataDescUpdatedAt := metadataMixinFields1[0].Descriptor()
+	// metadata.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	metadata.DefaultUpdatedAt = metadataDescUpdatedAt.Default.(func() time.Time)
+	// metadata.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	metadata.UpdateDefaultUpdatedAt = metadataDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// metadataDescCreatedAt is the schema descriptor for created_at field.
+	metadataDescCreatedAt := metadataMixinFields2[0].Descriptor()
+	// metadata.DefaultCreatedAt holds the default value on creation for the created_at field.
+	metadata.DefaultCreatedAt = metadataDescCreatedAt.Default.(func() time.Time)
+	// metadataDescTitle is the schema descriptor for title field.
+	metadataDescTitle := metadataFields[0].Descriptor()
+	// metadata.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	metadata.TitleValidator = func() func(string) error {
+		validators := metadataDescTitle.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(title string) error {
+			for _, fn := range fns {
+				if err := fn(title); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// metadataDescID is the schema descriptor for id field.
+	metadataDescID := metadataMixinFields0[0].Descriptor()
+	// metadata.DefaultID holds the default value on creation for the id field.
+	metadata.DefaultID = metadataDescID.Default.(func() uuid.UUID)
 	newsletterMixin := schema.Newsletter{}.Mixin()
 	newsletterMixinFields0 := newsletterMixin[0].Fields()
 	_ = newsletterMixinFields0
@@ -106,10 +279,69 @@ func init() {
 	newsletterDescCreatedAt := newsletterMixinFields2[0].Descriptor()
 	// newsletter.DefaultCreatedAt holds the default value on creation for the created_at field.
 	newsletter.DefaultCreatedAt = newsletterDescCreatedAt.Default.(func() time.Time)
+	// newsletterDescMessage is the schema descriptor for message field.
+	newsletterDescMessage := newsletterFields[0].Descriptor()
+	// newsletter.MessageValidator is a validator for the "message" field. It is called by the builders before save.
+	newsletter.MessageValidator = func() func(string) error {
+		validators := newsletterDescMessage.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(message string) error {
+			for _, fn := range fns {
+				if err := fn(message); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// newsletterDescID is the schema descriptor for id field.
 	newsletterDescID := newsletterMixinFields0[0].Descriptor()
 	// newsletter.DefaultID holds the default value on creation for the id field.
 	newsletter.DefaultID = newsletterDescID.Default.(func() uuid.UUID)
+	tagMixin := schema.Tag{}.Mixin()
+	tagMixinFields0 := tagMixin[0].Fields()
+	_ = tagMixinFields0
+	tagMixinFields1 := tagMixin[1].Fields()
+	_ = tagMixinFields1
+	tagMixinFields2 := tagMixin[2].Fields()
+	_ = tagMixinFields2
+	tagFields := schema.Tag{}.Fields()
+	_ = tagFields
+	// tagDescCreatedAt is the schema descriptor for created_at field.
+	tagDescCreatedAt := tagMixinFields1[0].Descriptor()
+	// tag.DefaultCreatedAt holds the default value on creation for the created_at field.
+	tag.DefaultCreatedAt = tagDescCreatedAt.Default.(func() time.Time)
+	// tagDescUpdatedAt is the schema descriptor for updated_at field.
+	tagDescUpdatedAt := tagMixinFields2[0].Descriptor()
+	// tag.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	tag.DefaultUpdatedAt = tagDescUpdatedAt.Default.(func() time.Time)
+	// tag.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	tag.UpdateDefaultUpdatedAt = tagDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tagDescName is the schema descriptor for name field.
+	tagDescName := tagFields[0].Descriptor()
+	// tag.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	tag.NameValidator = func() func(string) error {
+		validators := tagDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// tagDescID is the schema descriptor for id field.
+	tagDescID := tagMixinFields0[0].Descriptor()
+	// tag.DefaultID holds the default value on creation for the id field.
+	tag.DefaultID = tagDescID.Default.(func() uuid.UUID)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0

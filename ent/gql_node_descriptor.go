@@ -3,6 +3,8 @@
 package ent
 
 import (
+	"app/ent/article"
+	"app/ent/category"
 	"context"
 	"encoding/json"
 
@@ -36,25 +38,97 @@ func (a *Article) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     a.ID,
 		Type:   "Article",
-		Fields: make([]*Field, 2),
-		Edges:  make([]*Edge, 0),
+		Fields: make([]*Field, 4),
+		Edges:  make([]*Edge, 1),
 	}
 	var buf []byte
-	if buf, err = json.Marshal(a.UpdatedAt); err != nil {
+	if buf, err = json.Marshal(a.Title); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "string",
+		Name:  "title",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(a.Slug); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "string",
+		Name:  "slug",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(a.Description); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "string",
+		Name:  "description",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(a.Content); err != nil {
+		return nil, err
+	}
+	node.Fields[3] = &Field{
+		Type:  "string",
+		Name:  "content",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "Category",
+		Name: "categories",
+	}
+	err = a.QueryCategories().
+		Select(category.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
+// Node implements Noder interface
+func (c *Category) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     c.ID,
+		Type:   "Category",
+		Fields: make([]*Field, 3),
+		Edges:  make([]*Edge, 1),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(c.CreatedAt); err != nil {
 		return nil, err
 	}
 	node.Fields[0] = &Field{
 		Type:  "time.Time",
-		Name:  "updated_at",
+		Name:  "created_at",
 		Value: string(buf),
 	}
-	if buf, err = json.Marshal(a.CreatedAt); err != nil {
+	if buf, err = json.Marshal(c.UpdatedAt); err != nil {
 		return nil, err
 	}
 	node.Fields[1] = &Field{
 		Type:  "time.Time",
-		Name:  "created_at",
+		Name:  "updated_at",
 		Value: string(buf),
+	}
+	if buf, err = json.Marshal(c.Name); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "string",
+		Name:  "name",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "Article",
+		Name: "article",
+	}
+	err = c.QueryArticle().
+		Select(article.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
 	}
 	return node, nil
 }
@@ -68,31 +142,67 @@ func (c *Comment) Node(ctx context.Context) (node *Node, err error) {
 		Edges:  make([]*Edge, 0),
 	}
 	var buf []byte
-	if buf, err = json.Marshal(c.UpdatedAt); err != nil {
+	if buf, err = json.Marshal(c.CreatedAt); err != nil {
 		return nil, err
 	}
 	node.Fields[0] = &Field{
 		Type:  "time.Time",
-		Name:  "updated_at",
+		Name:  "created_at",
 		Value: string(buf),
 	}
-	if buf, err = json.Marshal(c.CreatedAt); err != nil {
+	if buf, err = json.Marshal(c.Content); err != nil {
 		return nil, err
 	}
 	node.Fields[1] = &Field{
-		Type:  "time.Time",
-		Name:  "created_at",
+		Type:  "string",
+		Name:  "content",
 		Value: string(buf),
 	}
 	return node, nil
 }
 
 // Node implements Noder interface
-func (m *Meta) Node(ctx context.Context) (node *Node, err error) {
+func (ga *Gallery) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     ga.ID,
+		Type:   "Gallery",
+		Fields: make([]*Field, 3),
+		Edges:  make([]*Edge, 0),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(ga.CreatedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "time.Time",
+		Name:  "created_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(ga.UpdatedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "time.Time",
+		Name:  "updated_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(ga.Name); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "string",
+		Name:  "name",
+		Value: string(buf),
+	}
+	return node, nil
+}
+
+// Node implements Noder interface
+func (m *Metadata) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     m.ID,
-		Type:   "Meta",
-		Fields: make([]*Field, 2),
+		Type:   "Metadata",
+		Fields: make([]*Field, 3),
 		Edges:  make([]*Edge, 0),
 	}
 	var buf []byte
@@ -112,6 +222,14 @@ func (m *Meta) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "created_at",
 		Value: string(buf),
 	}
+	if buf, err = json.Marshal(m.Title); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "string",
+		Name:  "title",
+		Value: string(buf),
+	}
 	return node, nil
 }
 
@@ -120,7 +238,7 @@ func (n *Newsletter) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     n.ID,
 		Type:   "Newsletter",
-		Fields: make([]*Field, 2),
+		Fields: make([]*Field, 3),
 		Edges:  make([]*Edge, 0),
 	}
 	var buf []byte
@@ -138,6 +256,50 @@ func (n *Newsletter) Node(ctx context.Context) (node *Node, err error) {
 	node.Fields[1] = &Field{
 		Type:  "time.Time",
 		Name:  "created_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(n.Message); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "string",
+		Name:  "message",
+		Value: string(buf),
+	}
+	return node, nil
+}
+
+// Node implements Noder interface
+func (t *Tag) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     t.ID,
+		Type:   "Tag",
+		Fields: make([]*Field, 3),
+		Edges:  make([]*Edge, 0),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(t.CreatedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "time.Time",
+		Name:  "created_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(t.UpdatedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "time.Time",
+		Name:  "updated_at",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(t.Name); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "string",
+		Name:  "name",
 		Value: string(buf),
 	}
 	return node, nil

@@ -4,9 +4,12 @@ package ent
 
 import (
 	"app/ent/article"
+	"app/ent/category"
 	"app/ent/comment"
-	"app/ent/meta"
+	"app/ent/gallery"
+	"app/ent/metadata"
 	"app/ent/newsletter"
+	"app/ent/tag"
 	"app/ent/user"
 	"context"
 	"fmt"
@@ -27,13 +30,22 @@ type Noder interface {
 func (n *Article) IsNode() {}
 
 // IsNode implements the Node interface check for GQLGen.
+func (n *Category) IsNode() {}
+
+// IsNode implements the Node interface check for GQLGen.
 func (n *Comment) IsNode() {}
 
 // IsNode implements the Node interface check for GQLGen.
-func (n *Meta) IsNode() {}
+func (n *Gallery) IsNode() {}
+
+// IsNode implements the Node interface check for GQLGen.
+func (n *Metadata) IsNode() {}
 
 // IsNode implements the Node interface check for GQLGen.
 func (n *Newsletter) IsNode() {}
+
+// IsNode implements the Node interface check for GQLGen.
+func (n *Tag) IsNode() {}
 
 // IsNode implements the Node interface check for GQLGen.
 func (n *User) IsNode() {}
@@ -108,6 +120,18 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 			return nil, err
 		}
 		return n, nil
+	case category.Table:
+		query := c.Category.Query().
+			Where(category.ID(id))
+		query, err := query.CollectFields(ctx, "Category")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
 	case comment.Table:
 		query := c.Comment.Query().
 			Where(comment.ID(id))
@@ -120,10 +144,22 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 			return nil, err
 		}
 		return n, nil
-	case meta.Table:
-		query := c.Meta.Query().
-			Where(meta.ID(id))
-		query, err := query.CollectFields(ctx, "Meta")
+	case gallery.Table:
+		query := c.Gallery.Query().
+			Where(gallery.ID(id))
+		query, err := query.CollectFields(ctx, "Gallery")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
+	case metadata.Table:
+		query := c.Metadata.Query().
+			Where(metadata.ID(id))
+		query, err := query.CollectFields(ctx, "Metadata")
 		if err != nil {
 			return nil, err
 		}
@@ -136,6 +172,18 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 		query := c.Newsletter.Query().
 			Where(newsletter.ID(id))
 		query, err := query.CollectFields(ctx, "Newsletter")
+		if err != nil {
+			return nil, err
+		}
+		n, err := query.Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
+	case tag.Table:
+		query := c.Tag.Query().
+			Where(tag.ID(id))
+		query, err := query.CollectFields(ctx, "Tag")
 		if err != nil {
 			return nil, err
 		}
@@ -245,6 +293,22 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 				*noder = node
 			}
 		}
+	case category.Table:
+		query := c.Category.Query().
+			Where(category.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Category")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
 	case comment.Table:
 		query := c.Comment.Query().
 			Where(comment.IDIn(ids...))
@@ -261,10 +325,26 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 				*noder = node
 			}
 		}
-	case meta.Table:
-		query := c.Meta.Query().
-			Where(meta.IDIn(ids...))
-		query, err := query.CollectFields(ctx, "Meta")
+	case gallery.Table:
+		query := c.Gallery.Query().
+			Where(gallery.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Gallery")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case metadata.Table:
+		query := c.Metadata.Query().
+			Where(metadata.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Metadata")
 		if err != nil {
 			return nil, err
 		}
@@ -281,6 +361,22 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		query := c.Newsletter.Query().
 			Where(newsletter.IDIn(ids...))
 		query, err := query.CollectFields(ctx, "Newsletter")
+		if err != nil {
+			return nil, err
+		}
+		nodes, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case tag.Table:
+		query := c.Tag.Query().
+			Where(tag.IDIn(ids...))
+		query, err := query.CollectFields(ctx, "Tag")
 		if err != nil {
 			return nil, err
 		}
