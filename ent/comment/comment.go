@@ -13,10 +13,10 @@ const (
 	Label = "comment"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
-	FieldUpdatedAt = "updated_at"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// FieldContent holds the string denoting the content field in the database.
+	FieldContent = "content"
 	// Table holds the table name of the comment in the database.
 	Table = "comments"
 )
@@ -24,8 +24,8 @@ const (
 // Columns holds all SQL columns for comment fields.
 var Columns = []string{
 	FieldID,
-	FieldUpdatedAt,
 	FieldCreatedAt,
+	FieldContent,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -39,12 +39,10 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
-	DefaultUpdatedAt func() time.Time
-	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
-	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
+	// ContentValidator is a validator for the "content" field. It is called by the builders before save.
+	ContentValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )

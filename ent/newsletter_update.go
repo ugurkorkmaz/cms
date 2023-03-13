@@ -34,6 +34,12 @@ func (nu *NewsletterUpdate) SetUpdatedAt(t time.Time) *NewsletterUpdate {
 	return nu
 }
 
+// SetMessage sets the "message" field.
+func (nu *NewsletterUpdate) SetMessage(s string) *NewsletterUpdate {
+	nu.mutation.SetMessage(s)
+	return nu
+}
+
 // Mutation returns the NewsletterMutation object of the builder.
 func (nu *NewsletterUpdate) Mutation() *NewsletterMutation {
 	return nu.mutation
@@ -75,7 +81,20 @@ func (nu *NewsletterUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (nu *NewsletterUpdate) check() error {
+	if v, ok := nu.mutation.Message(); ok {
+		if err := newsletter.MessageValidator(v); err != nil {
+			return &ValidationError{Name: "message", err: fmt.Errorf(`ent: validator failed for field "Newsletter.message": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (nu *NewsletterUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := nu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(newsletter.Table, newsletter.Columns, sqlgraph.NewFieldSpec(newsletter.FieldID, field.TypeUUID))
 	if ps := nu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -86,6 +105,9 @@ func (nu *NewsletterUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := nu.mutation.UpdatedAt(); ok {
 		_spec.SetField(newsletter.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := nu.mutation.Message(); ok {
+		_spec.SetField(newsletter.FieldMessage, field.TypeString, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, nu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -110,6 +132,12 @@ type NewsletterUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (nuo *NewsletterUpdateOne) SetUpdatedAt(t time.Time) *NewsletterUpdateOne {
 	nuo.mutation.SetUpdatedAt(t)
+	return nuo
+}
+
+// SetMessage sets the "message" field.
+func (nuo *NewsletterUpdateOne) SetMessage(s string) *NewsletterUpdateOne {
+	nuo.mutation.SetMessage(s)
 	return nuo
 }
 
@@ -167,7 +195,20 @@ func (nuo *NewsletterUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (nuo *NewsletterUpdateOne) check() error {
+	if v, ok := nuo.mutation.Message(); ok {
+		if err := newsletter.MessageValidator(v); err != nil {
+			return &ValidationError{Name: "message", err: fmt.Errorf(`ent: validator failed for field "Newsletter.message": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (nuo *NewsletterUpdateOne) sqlSave(ctx context.Context) (_node *Newsletter, err error) {
+	if err := nuo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(newsletter.Table, newsletter.Columns, sqlgraph.NewFieldSpec(newsletter.FieldID, field.TypeUUID))
 	id, ok := nuo.mutation.ID()
 	if !ok {
@@ -195,6 +236,9 @@ func (nuo *NewsletterUpdateOne) sqlSave(ctx context.Context) (_node *Newsletter,
 	}
 	if value, ok := nuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(newsletter.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := nuo.mutation.Message(); ok {
+		_spec.SetField(newsletter.FieldMessage, field.TypeString, value)
 	}
 	_node = &Newsletter{config: nuo.config}
 	_spec.Assign = _node.assignValues

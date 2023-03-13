@@ -4,9 +4,12 @@ package ent
 
 import (
 	"app/ent/article"
+	"app/ent/category"
 	"app/ent/comment"
-	"app/ent/meta"
+	"app/ent/gallery"
+	"app/ent/metadata"
 	"app/ent/newsletter"
+	"app/ent/tag"
 	"app/ent/user"
 	"context"
 	"errors"
@@ -70,9 +73,12 @@ type OrderFunc func(*sql.Selector)
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		article.Table:    article.ValidColumn,
+		category.Table:   category.ValidColumn,
 		comment.Table:    comment.ValidColumn,
-		meta.Table:       meta.ValidColumn,
+		gallery.Table:    gallery.ValidColumn,
+		metadata.Table:   metadata.ValidColumn,
 		newsletter.Table: newsletter.ValidColumn,
+		tag.Table:        tag.ValidColumn,
 		user.Table:       user.ValidColumn,
 	}
 	check, ok := checks[table]

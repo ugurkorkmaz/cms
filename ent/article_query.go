@@ -4,8 +4,10 @@ package ent
 
 import (
 	"app/ent/article"
+	"app/ent/category"
 	"app/ent/predicate"
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -18,12 +20,14 @@ import (
 // ArticleQuery is the builder for querying Article entities.
 type ArticleQuery struct {
 	config
-	ctx        *QueryContext
-	order      []OrderFunc
-	inters     []Interceptor
-	predicates []predicate.Article
-	modifiers  []func(*sql.Selector)
-	loadTotal  []func(context.Context, []*Article) error
+	ctx                 *QueryContext
+	order               []OrderFunc
+	inters              []Interceptor
+	predicates          []predicate.Article
+	withCategories      *CategoryQuery
+	modifiers           []func(*sql.Selector)
+	loadTotal           []func(context.Context, []*Article) error
+	withNamedCategories map[string]*CategoryQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -58,6 +62,28 @@ func (aq *ArticleQuery) Unique(unique bool) *ArticleQuery {
 func (aq *ArticleQuery) Order(o ...OrderFunc) *ArticleQuery {
 	aq.order = append(aq.order, o...)
 	return aq
+}
+
+// QueryCategories chains the current query on the "categories" edge.
+func (aq *ArticleQuery) QueryCategories() *CategoryQuery {
+	query := (&CategoryClient{config: aq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := aq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := aq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(article.Table, article.FieldID, selector),
+			sqlgraph.To(category.Table, category.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, article.CategoriesTable, article.CategoriesPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Article entity from the query.
@@ -247,15 +273,27 @@ func (aq *ArticleQuery) Clone() *ArticleQuery {
 		return nil
 	}
 	return &ArticleQuery{
-		config:     aq.config,
-		ctx:        aq.ctx.Clone(),
-		order:      append([]OrderFunc{}, aq.order...),
-		inters:     append([]Interceptor{}, aq.inters...),
-		predicates: append([]predicate.Article{}, aq.predicates...),
+		config:         aq.config,
+		ctx:            aq.ctx.Clone(),
+		order:          append([]OrderFunc{}, aq.order...),
+		inters:         append([]Interceptor{}, aq.inters...),
+		predicates:     append([]predicate.Article{}, aq.predicates...),
+		withCategories: aq.withCategories.Clone(),
 		// clone intermediate query.
 		sql:  aq.sql.Clone(),
 		path: aq.path,
 	}
+}
+
+// WithCategories tells the query-builder to eager-load the nodes that are connected to
+// the "categories" edge. The optional arguments are used to configure the query builder of the edge.
+func (aq *ArticleQuery) WithCategories(opts ...func(*CategoryQuery)) *ArticleQuery {
+	query := (&CategoryClient{config: aq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	aq.withCategories = query
+	return aq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -264,12 +302,12 @@ func (aq *ArticleQuery) Clone() *ArticleQuery {
 // Example:
 //
 //	var v []struct {
-//		UpdatedAt time.Time `json:"updated_at,omitempty"`
+//		Title string `json:"title,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Article.Query().
-//		GroupBy(article.FieldUpdatedAt).
+//		GroupBy(article.FieldTitle).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (aq *ArticleQuery) GroupBy(field string, fields ...string) *ArticleGroupBy {
@@ -287,11 +325,11 @@ func (aq *ArticleQuery) GroupBy(field string, fields ...string) *ArticleGroupBy 
 // Example:
 //
 //	var v []struct {
-//		UpdatedAt time.Time `json:"updated_at,omitempty"`
+//		Title string `json:"title,omitempty"`
 //	}
 //
 //	client.Article.Query().
-//		Select(article.FieldUpdatedAt).
+//		Select(article.FieldTitle).
 //		Scan(ctx, &v)
 func (aq *ArticleQuery) Select(fields ...string) *ArticleSelect {
 	aq.ctx.Fields = append(aq.ctx.Fields, fields...)
@@ -334,8 +372,11 @@ func (aq *ArticleQuery) prepareQuery(ctx context.Context) error {
 
 func (aq *ArticleQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Article, error) {
 	var (
-		nodes = []*Article{}
-		_spec = aq.querySpec()
+		nodes       = []*Article{}
+		_spec       = aq.querySpec()
+		loadedTypes = [1]bool{
+			aq.withCategories != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Article).scanValues(nil, columns)
@@ -343,6 +384,7 @@ func (aq *ArticleQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Arti
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Article{config: aq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if len(aq.modifiers) > 0 {
@@ -357,12 +399,88 @@ func (aq *ArticleQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Arti
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := aq.withCategories; query != nil {
+		if err := aq.loadCategories(ctx, query, nodes,
+			func(n *Article) { n.Edges.Categories = []*Category{} },
+			func(n *Article, e *Category) { n.Edges.Categories = append(n.Edges.Categories, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range aq.withNamedCategories {
+		if err := aq.loadCategories(ctx, query, nodes,
+			func(n *Article) { n.appendNamedCategories(name) },
+			func(n *Article, e *Category) { n.appendNamedCategories(name, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for i := range aq.loadTotal {
 		if err := aq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
+}
+
+func (aq *ArticleQuery) loadCategories(ctx context.Context, query *CategoryQuery, nodes []*Article, init func(*Article), assign func(*Article, *Category)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[uuid.UUID]*Article)
+	nids := make(map[uuid.UUID]map[*Article]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(article.CategoriesTable)
+		s.Join(joinT).On(s.C(category.FieldID), joinT.C(article.CategoriesPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(article.CategoriesPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(article.CategoriesPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(uuid.UUID)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := *values[0].(*uuid.UUID)
+				inValue := *values[1].(*uuid.UUID)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Article]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Category](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "categories" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
 }
 
 func (aq *ArticleQuery) sqlCount(ctx context.Context) (int, error) {
@@ -447,6 +565,20 @@ func (aq *ArticleQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// WithNamedCategories tells the query-builder to eager-load the nodes that are connected to the "categories"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (aq *ArticleQuery) WithNamedCategories(name string, opts ...func(*CategoryQuery)) *ArticleQuery {
+	query := (&CategoryClient{config: aq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if aq.withNamedCategories == nil {
+		aq.withNamedCategories = make(map[string]*CategoryQuery)
+	}
+	aq.withNamedCategories[name] = query
+	return aq
 }
 
 // ArticleGroupBy is the group-by builder for Article entities.

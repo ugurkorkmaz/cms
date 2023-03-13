@@ -19,8 +19,12 @@ autobind:
   - "app/ent/user"
   - "app/ent/article"
   - "app/ent/comment"
-  - "app/ent/meta"
+  - "app/ent/metadata"
   - "app/ent/newsletter"
+  - "app/ent/gallery"
+  - "app/ent/category"
+  - "app/ent/tag"
+  - "app/ent/comment"
 
 models:
   ID:

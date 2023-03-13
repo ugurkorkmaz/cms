@@ -14,12 +14,18 @@ type Tx struct {
 	config
 	// Article is the client for interacting with the Article builders.
 	Article *ArticleClient
+	// Category is the client for interacting with the Category builders.
+	Category *CategoryClient
 	// Comment is the client for interacting with the Comment builders.
 	Comment *CommentClient
-	// Meta is the client for interacting with the Meta builders.
-	Meta *MetaClient
+	// Gallery is the client for interacting with the Gallery builders.
+	Gallery *GalleryClient
+	// Metadata is the client for interacting with the Metadata builders.
+	Metadata *MetadataClient
 	// Newsletter is the client for interacting with the Newsletter builders.
 	Newsletter *NewsletterClient
+	// Tag is the client for interacting with the Tag builders.
+	Tag *TagClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -154,9 +160,12 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Article = NewArticleClient(tx.config)
+	tx.Category = NewCategoryClient(tx.config)
 	tx.Comment = NewCommentClient(tx.config)
-	tx.Meta = NewMetaClient(tx.config)
+	tx.Gallery = NewGalleryClient(tx.config)
+	tx.Metadata = NewMetadataClient(tx.config)
 	tx.Newsletter = NewNewsletterClient(tx.config)
+	tx.Tag = NewTagClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

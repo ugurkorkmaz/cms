@@ -4,10 +4,10 @@ package ent
 
 import (
 	"app/ent/article"
+	"app/ent/category"
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -21,31 +21,35 @@ type ArticleCreate struct {
 	hooks    []Hook
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (ac *ArticleCreate) SetUpdatedAt(t time.Time) *ArticleCreate {
-	ac.mutation.SetUpdatedAt(t)
+// SetTitle sets the "title" field.
+func (ac *ArticleCreate) SetTitle(s string) *ArticleCreate {
+	ac.mutation.SetTitle(s)
 	return ac
 }
 
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (ac *ArticleCreate) SetNillableUpdatedAt(t *time.Time) *ArticleCreate {
-	if t != nil {
-		ac.SetUpdatedAt(*t)
+// SetSlug sets the "slug" field.
+func (ac *ArticleCreate) SetSlug(s string) *ArticleCreate {
+	ac.mutation.SetSlug(s)
+	return ac
+}
+
+// SetDescription sets the "description" field.
+func (ac *ArticleCreate) SetDescription(s string) *ArticleCreate {
+	ac.mutation.SetDescription(s)
+	return ac
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (ac *ArticleCreate) SetNillableDescription(s *string) *ArticleCreate {
+	if s != nil {
+		ac.SetDescription(*s)
 	}
 	return ac
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (ac *ArticleCreate) SetCreatedAt(t time.Time) *ArticleCreate {
-	ac.mutation.SetCreatedAt(t)
-	return ac
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (ac *ArticleCreate) SetNillableCreatedAt(t *time.Time) *ArticleCreate {
-	if t != nil {
-		ac.SetCreatedAt(*t)
-	}
+// SetContent sets the "content" field.
+func (ac *ArticleCreate) SetContent(s string) *ArticleCreate {
+	ac.mutation.SetContent(s)
 	return ac
 }
 
@@ -61,6 +65,21 @@ func (ac *ArticleCreate) SetNillableID(u *uuid.UUID) *ArticleCreate {
 		ac.SetID(*u)
 	}
 	return ac
+}
+
+// AddCategoryIDs adds the "categories" edge to the Category entity by IDs.
+func (ac *ArticleCreate) AddCategoryIDs(ids ...uuid.UUID) *ArticleCreate {
+	ac.mutation.AddCategoryIDs(ids...)
+	return ac
+}
+
+// AddCategories adds the "categories" edges to the Category entity.
+func (ac *ArticleCreate) AddCategories(c ...*Category) *ArticleCreate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return ac.AddCategoryIDs(ids...)
 }
 
 // Mutation returns the ArticleMutation object of the builder.
@@ -98,14 +117,6 @@ func (ac *ArticleCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (ac *ArticleCreate) defaults() {
-	if _, ok := ac.mutation.UpdatedAt(); !ok {
-		v := article.DefaultUpdatedAt()
-		ac.mutation.SetUpdatedAt(v)
-	}
-	if _, ok := ac.mutation.CreatedAt(); !ok {
-		v := article.DefaultCreatedAt()
-		ac.mutation.SetCreatedAt(v)
-	}
 	if _, ok := ac.mutation.ID(); !ok {
 		v := article.DefaultID()
 		ac.mutation.SetID(v)
@@ -114,11 +125,34 @@ func (ac *ArticleCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (ac *ArticleCreate) check() error {
-	if _, ok := ac.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Article.updated_at"`)}
+	if _, ok := ac.mutation.Title(); !ok {
+		return &ValidationError{Name: "title", err: errors.New(`ent: missing required field "Article.title"`)}
 	}
-	if _, ok := ac.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Article.created_at"`)}
+	if v, ok := ac.mutation.Title(); ok {
+		if err := article.TitleValidator(v); err != nil {
+			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Article.title": %w`, err)}
+		}
+	}
+	if _, ok := ac.mutation.Slug(); !ok {
+		return &ValidationError{Name: "slug", err: errors.New(`ent: missing required field "Article.slug"`)}
+	}
+	if v, ok := ac.mutation.Slug(); ok {
+		if err := article.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Article.slug": %w`, err)}
+		}
+	}
+	if v, ok := ac.mutation.Description(); ok {
+		if err := article.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Article.description": %w`, err)}
+		}
+	}
+	if _, ok := ac.mutation.Content(); !ok {
+		return &ValidationError{Name: "content", err: errors.New(`ent: missing required field "Article.content"`)}
+	}
+	if v, ok := ac.mutation.Content(); ok {
+		if err := article.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "Article.content": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -155,13 +189,40 @@ func (ac *ArticleCreate) createSpec() (*Article, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := ac.mutation.UpdatedAt(); ok {
-		_spec.SetField(article.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
+	if value, ok := ac.mutation.Title(); ok {
+		_spec.SetField(article.FieldTitle, field.TypeString, value)
+		_node.Title = value
 	}
-	if value, ok := ac.mutation.CreatedAt(); ok {
-		_spec.SetField(article.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
+	if value, ok := ac.mutation.Slug(); ok {
+		_spec.SetField(article.FieldSlug, field.TypeString, value)
+		_node.Slug = value
+	}
+	if value, ok := ac.mutation.Description(); ok {
+		_spec.SetField(article.FieldDescription, field.TypeString, value)
+		_node.Description = value
+	}
+	if value, ok := ac.mutation.Content(); ok {
+		_spec.SetField(article.FieldContent, field.TypeString, value)
+		_node.Content = value
+	}
+	if nodes := ac.mutation.CategoriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   article.CategoriesTable,
+			Columns: article.CategoriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: category.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

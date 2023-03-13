@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -28,9 +27,9 @@ func (cu *CommentUpdate) Where(ps ...predicate.Comment) *CommentUpdate {
 	return cu
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (cu *CommentUpdate) SetUpdatedAt(t time.Time) *CommentUpdate {
-	cu.mutation.SetUpdatedAt(t)
+// SetContent sets the "content" field.
+func (cu *CommentUpdate) SetContent(s string) *CommentUpdate {
+	cu.mutation.SetContent(s)
 	return cu
 }
 
@@ -41,7 +40,6 @@ func (cu *CommentUpdate) Mutation() *CommentMutation {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *CommentUpdate) Save(ctx context.Context) (int, error) {
-	cu.defaults()
 	return withHooks[int, CommentMutation](ctx, cu.sqlSave, cu.mutation, cu.hooks)
 }
 
@@ -67,15 +65,20 @@ func (cu *CommentUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (cu *CommentUpdate) defaults() {
-	if _, ok := cu.mutation.UpdatedAt(); !ok {
-		v := comment.UpdateDefaultUpdatedAt()
-		cu.mutation.SetUpdatedAt(v)
+// check runs all checks and user-defined validators on the builder.
+func (cu *CommentUpdate) check() error {
+	if v, ok := cu.mutation.Content(); ok {
+		if err := comment.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "Comment.content": %w`, err)}
+		}
 	}
+	return nil
 }
 
 func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := cu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(comment.Table, comment.Columns, sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUUID))
 	if ps := cu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -84,8 +87,8 @@ func (cu *CommentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := cu.mutation.UpdatedAt(); ok {
-		_spec.SetField(comment.FieldUpdatedAt, field.TypeTime, value)
+	if value, ok := cu.mutation.Content(); ok {
+		_spec.SetField(comment.FieldContent, field.TypeString, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -107,9 +110,9 @@ type CommentUpdateOne struct {
 	mutation *CommentMutation
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (cuo *CommentUpdateOne) SetUpdatedAt(t time.Time) *CommentUpdateOne {
-	cuo.mutation.SetUpdatedAt(t)
+// SetContent sets the "content" field.
+func (cuo *CommentUpdateOne) SetContent(s string) *CommentUpdateOne {
+	cuo.mutation.SetContent(s)
 	return cuo
 }
 
@@ -133,7 +136,6 @@ func (cuo *CommentUpdateOne) Select(field string, fields ...string) *CommentUpda
 
 // Save executes the query and returns the updated Comment entity.
 func (cuo *CommentUpdateOne) Save(ctx context.Context) (*Comment, error) {
-	cuo.defaults()
 	return withHooks[*Comment, CommentMutation](ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
 }
 
@@ -159,15 +161,20 @@ func (cuo *CommentUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (cuo *CommentUpdateOne) defaults() {
-	if _, ok := cuo.mutation.UpdatedAt(); !ok {
-		v := comment.UpdateDefaultUpdatedAt()
-		cuo.mutation.SetUpdatedAt(v)
+// check runs all checks and user-defined validators on the builder.
+func (cuo *CommentUpdateOne) check() error {
+	if v, ok := cuo.mutation.Content(); ok {
+		if err := comment.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "Comment.content": %w`, err)}
+		}
 	}
+	return nil
 }
 
 func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err error) {
+	if err := cuo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(comment.Table, comment.Columns, sqlgraph.NewFieldSpec(comment.FieldID, field.TypeUUID))
 	id, ok := cuo.mutation.ID()
 	if !ok {
@@ -193,8 +200,8 @@ func (cuo *CommentUpdateOne) sqlSave(ctx context.Context) (_node *Comment, err e
 			}
 		}
 	}
-	if value, ok := cuo.mutation.UpdatedAt(); ok {
-		_spec.SetField(comment.FieldUpdatedAt, field.TypeTime, value)
+	if value, ok := cuo.mutation.Content(); ok {
+		_spec.SetField(comment.FieldContent, field.TypeString, value)
 	}
 	_node = &Comment{config: cuo.config}
 	_spec.Assign = _node.assignValues

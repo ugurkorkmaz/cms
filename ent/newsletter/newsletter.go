@@ -17,6 +17,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// FieldMessage holds the string denoting the message field in the database.
+	FieldMessage = "message"
 	// Table holds the table name of the newsletter in the database.
 	Table = "newsletters"
 )
@@ -26,6 +28,7 @@ var Columns = []string{
 	FieldID,
 	FieldUpdatedAt,
 	FieldCreatedAt,
+	FieldMessage,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -45,6 +48,8 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
+	// MessageValidator is a validator for the "message" field. It is called by the builders before save.
+	MessageValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )

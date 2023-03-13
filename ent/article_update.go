@@ -4,15 +4,16 @@ package ent
 
 import (
 	"app/ent/article"
+	"app/ent/category"
 	"app/ent/predicate"
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // ArticleUpdate is the builder for updating Article entities.
@@ -28,10 +29,57 @@ func (au *ArticleUpdate) Where(ps ...predicate.Article) *ArticleUpdate {
 	return au
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (au *ArticleUpdate) SetUpdatedAt(t time.Time) *ArticleUpdate {
-	au.mutation.SetUpdatedAt(t)
+// SetTitle sets the "title" field.
+func (au *ArticleUpdate) SetTitle(s string) *ArticleUpdate {
+	au.mutation.SetTitle(s)
 	return au
+}
+
+// SetSlug sets the "slug" field.
+func (au *ArticleUpdate) SetSlug(s string) *ArticleUpdate {
+	au.mutation.SetSlug(s)
+	return au
+}
+
+// SetDescription sets the "description" field.
+func (au *ArticleUpdate) SetDescription(s string) *ArticleUpdate {
+	au.mutation.SetDescription(s)
+	return au
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (au *ArticleUpdate) SetNillableDescription(s *string) *ArticleUpdate {
+	if s != nil {
+		au.SetDescription(*s)
+	}
+	return au
+}
+
+// ClearDescription clears the value of the "description" field.
+func (au *ArticleUpdate) ClearDescription() *ArticleUpdate {
+	au.mutation.ClearDescription()
+	return au
+}
+
+// SetContent sets the "content" field.
+func (au *ArticleUpdate) SetContent(s string) *ArticleUpdate {
+	au.mutation.SetContent(s)
+	return au
+}
+
+// AddCategoryIDs adds the "categories" edge to the Category entity by IDs.
+func (au *ArticleUpdate) AddCategoryIDs(ids ...uuid.UUID) *ArticleUpdate {
+	au.mutation.AddCategoryIDs(ids...)
+	return au
+}
+
+// AddCategories adds the "categories" edges to the Category entity.
+func (au *ArticleUpdate) AddCategories(c ...*Category) *ArticleUpdate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return au.AddCategoryIDs(ids...)
 }
 
 // Mutation returns the ArticleMutation object of the builder.
@@ -39,9 +87,29 @@ func (au *ArticleUpdate) Mutation() *ArticleMutation {
 	return au.mutation
 }
 
+// ClearCategories clears all "categories" edges to the Category entity.
+func (au *ArticleUpdate) ClearCategories() *ArticleUpdate {
+	au.mutation.ClearCategories()
+	return au
+}
+
+// RemoveCategoryIDs removes the "categories" edge to Category entities by IDs.
+func (au *ArticleUpdate) RemoveCategoryIDs(ids ...uuid.UUID) *ArticleUpdate {
+	au.mutation.RemoveCategoryIDs(ids...)
+	return au
+}
+
+// RemoveCategories removes "categories" edges to Category entities.
+func (au *ArticleUpdate) RemoveCategories(c ...*Category) *ArticleUpdate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return au.RemoveCategoryIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (au *ArticleUpdate) Save(ctx context.Context) (int, error) {
-	au.defaults()
 	return withHooks[int, ArticleMutation](ctx, au.sqlSave, au.mutation, au.hooks)
 }
 
@@ -67,15 +135,35 @@ func (au *ArticleUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (au *ArticleUpdate) defaults() {
-	if _, ok := au.mutation.UpdatedAt(); !ok {
-		v := article.UpdateDefaultUpdatedAt()
-		au.mutation.SetUpdatedAt(v)
+// check runs all checks and user-defined validators on the builder.
+func (au *ArticleUpdate) check() error {
+	if v, ok := au.mutation.Title(); ok {
+		if err := article.TitleValidator(v); err != nil {
+			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Article.title": %w`, err)}
+		}
 	}
+	if v, ok := au.mutation.Slug(); ok {
+		if err := article.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Article.slug": %w`, err)}
+		}
+	}
+	if v, ok := au.mutation.Description(); ok {
+		if err := article.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Article.description": %w`, err)}
+		}
+	}
+	if v, ok := au.mutation.Content(); ok {
+		if err := article.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "Article.content": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (au *ArticleUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := au.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(article.Table, article.Columns, sqlgraph.NewFieldSpec(article.FieldID, field.TypeUUID))
 	if ps := au.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -84,8 +172,74 @@ func (au *ArticleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := au.mutation.UpdatedAt(); ok {
-		_spec.SetField(article.FieldUpdatedAt, field.TypeTime, value)
+	if value, ok := au.mutation.Title(); ok {
+		_spec.SetField(article.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := au.mutation.Slug(); ok {
+		_spec.SetField(article.FieldSlug, field.TypeString, value)
+	}
+	if value, ok := au.mutation.Description(); ok {
+		_spec.SetField(article.FieldDescription, field.TypeString, value)
+	}
+	if au.mutation.DescriptionCleared() {
+		_spec.ClearField(article.FieldDescription, field.TypeString)
+	}
+	if value, ok := au.mutation.Content(); ok {
+		_spec.SetField(article.FieldContent, field.TypeString, value)
+	}
+	if au.mutation.CategoriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   article.CategoriesTable,
+			Columns: article.CategoriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: category.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.RemovedCategoriesIDs(); len(nodes) > 0 && !au.mutation.CategoriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   article.CategoriesTable,
+			Columns: article.CategoriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: category.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.CategoriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   article.CategoriesTable,
+			Columns: article.CategoriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: category.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, au.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -107,15 +261,83 @@ type ArticleUpdateOne struct {
 	mutation *ArticleMutation
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (auo *ArticleUpdateOne) SetUpdatedAt(t time.Time) *ArticleUpdateOne {
-	auo.mutation.SetUpdatedAt(t)
+// SetTitle sets the "title" field.
+func (auo *ArticleUpdateOne) SetTitle(s string) *ArticleUpdateOne {
+	auo.mutation.SetTitle(s)
 	return auo
+}
+
+// SetSlug sets the "slug" field.
+func (auo *ArticleUpdateOne) SetSlug(s string) *ArticleUpdateOne {
+	auo.mutation.SetSlug(s)
+	return auo
+}
+
+// SetDescription sets the "description" field.
+func (auo *ArticleUpdateOne) SetDescription(s string) *ArticleUpdateOne {
+	auo.mutation.SetDescription(s)
+	return auo
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (auo *ArticleUpdateOne) SetNillableDescription(s *string) *ArticleUpdateOne {
+	if s != nil {
+		auo.SetDescription(*s)
+	}
+	return auo
+}
+
+// ClearDescription clears the value of the "description" field.
+func (auo *ArticleUpdateOne) ClearDescription() *ArticleUpdateOne {
+	auo.mutation.ClearDescription()
+	return auo
+}
+
+// SetContent sets the "content" field.
+func (auo *ArticleUpdateOne) SetContent(s string) *ArticleUpdateOne {
+	auo.mutation.SetContent(s)
+	return auo
+}
+
+// AddCategoryIDs adds the "categories" edge to the Category entity by IDs.
+func (auo *ArticleUpdateOne) AddCategoryIDs(ids ...uuid.UUID) *ArticleUpdateOne {
+	auo.mutation.AddCategoryIDs(ids...)
+	return auo
+}
+
+// AddCategories adds the "categories" edges to the Category entity.
+func (auo *ArticleUpdateOne) AddCategories(c ...*Category) *ArticleUpdateOne {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return auo.AddCategoryIDs(ids...)
 }
 
 // Mutation returns the ArticleMutation object of the builder.
 func (auo *ArticleUpdateOne) Mutation() *ArticleMutation {
 	return auo.mutation
+}
+
+// ClearCategories clears all "categories" edges to the Category entity.
+func (auo *ArticleUpdateOne) ClearCategories() *ArticleUpdateOne {
+	auo.mutation.ClearCategories()
+	return auo
+}
+
+// RemoveCategoryIDs removes the "categories" edge to Category entities by IDs.
+func (auo *ArticleUpdateOne) RemoveCategoryIDs(ids ...uuid.UUID) *ArticleUpdateOne {
+	auo.mutation.RemoveCategoryIDs(ids...)
+	return auo
+}
+
+// RemoveCategories removes "categories" edges to Category entities.
+func (auo *ArticleUpdateOne) RemoveCategories(c ...*Category) *ArticleUpdateOne {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return auo.RemoveCategoryIDs(ids...)
 }
 
 // Where appends a list predicates to the ArticleUpdate builder.
@@ -133,7 +355,6 @@ func (auo *ArticleUpdateOne) Select(field string, fields ...string) *ArticleUpda
 
 // Save executes the query and returns the updated Article entity.
 func (auo *ArticleUpdateOne) Save(ctx context.Context) (*Article, error) {
-	auo.defaults()
 	return withHooks[*Article, ArticleMutation](ctx, auo.sqlSave, auo.mutation, auo.hooks)
 }
 
@@ -159,15 +380,35 @@ func (auo *ArticleUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (auo *ArticleUpdateOne) defaults() {
-	if _, ok := auo.mutation.UpdatedAt(); !ok {
-		v := article.UpdateDefaultUpdatedAt()
-		auo.mutation.SetUpdatedAt(v)
+// check runs all checks and user-defined validators on the builder.
+func (auo *ArticleUpdateOne) check() error {
+	if v, ok := auo.mutation.Title(); ok {
+		if err := article.TitleValidator(v); err != nil {
+			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Article.title": %w`, err)}
+		}
 	}
+	if v, ok := auo.mutation.Slug(); ok {
+		if err := article.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Article.slug": %w`, err)}
+		}
+	}
+	if v, ok := auo.mutation.Description(); ok {
+		if err := article.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Article.description": %w`, err)}
+		}
+	}
+	if v, ok := auo.mutation.Content(); ok {
+		if err := article.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "Article.content": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (auo *ArticleUpdateOne) sqlSave(ctx context.Context) (_node *Article, err error) {
+	if err := auo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(article.Table, article.Columns, sqlgraph.NewFieldSpec(article.FieldID, field.TypeUUID))
 	id, ok := auo.mutation.ID()
 	if !ok {
@@ -193,8 +434,74 @@ func (auo *ArticleUpdateOne) sqlSave(ctx context.Context) (_node *Article, err e
 			}
 		}
 	}
-	if value, ok := auo.mutation.UpdatedAt(); ok {
-		_spec.SetField(article.FieldUpdatedAt, field.TypeTime, value)
+	if value, ok := auo.mutation.Title(); ok {
+		_spec.SetField(article.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := auo.mutation.Slug(); ok {
+		_spec.SetField(article.FieldSlug, field.TypeString, value)
+	}
+	if value, ok := auo.mutation.Description(); ok {
+		_spec.SetField(article.FieldDescription, field.TypeString, value)
+	}
+	if auo.mutation.DescriptionCleared() {
+		_spec.ClearField(article.FieldDescription, field.TypeString)
+	}
+	if value, ok := auo.mutation.Content(); ok {
+		_spec.SetField(article.FieldContent, field.TypeString, value)
+	}
+	if auo.mutation.CategoriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   article.CategoriesTable,
+			Columns: article.CategoriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: category.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.RemovedCategoriesIDs(); len(nodes) > 0 && !auo.mutation.CategoriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   article.CategoriesTable,
+			Columns: article.CategoriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: category.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.CategoriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   article.CategoriesTable,
+			Columns: article.CategoriesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: category.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Article{config: auo.config}
 	_spec.Assign = _node.assignValues

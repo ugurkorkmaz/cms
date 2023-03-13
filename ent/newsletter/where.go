@@ -65,6 +65,11 @@ func CreatedAt(v time.Time) predicate.Newsletter {
 	return predicate.Newsletter(sql.FieldEQ(FieldCreatedAt, v))
 }
 
+// Message applies equality check predicate on the "message" field. It's identical to MessageEQ.
+func Message(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldEQ(FieldMessage, v))
+}
+
 // UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
 func UpdatedAtEQ(v time.Time) predicate.Newsletter {
 	return predicate.Newsletter(sql.FieldEQ(FieldUpdatedAt, v))
@@ -143,6 +148,71 @@ func CreatedAtLT(v time.Time) predicate.Newsletter {
 // CreatedAtLTE applies the LTE predicate on the "created_at" field.
 func CreatedAtLTE(v time.Time) predicate.Newsletter {
 	return predicate.Newsletter(sql.FieldLTE(FieldCreatedAt, v))
+}
+
+// MessageEQ applies the EQ predicate on the "message" field.
+func MessageEQ(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldEQ(FieldMessage, v))
+}
+
+// MessageNEQ applies the NEQ predicate on the "message" field.
+func MessageNEQ(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldNEQ(FieldMessage, v))
+}
+
+// MessageIn applies the In predicate on the "message" field.
+func MessageIn(vs ...string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldIn(FieldMessage, vs...))
+}
+
+// MessageNotIn applies the NotIn predicate on the "message" field.
+func MessageNotIn(vs ...string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldNotIn(FieldMessage, vs...))
+}
+
+// MessageGT applies the GT predicate on the "message" field.
+func MessageGT(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldGT(FieldMessage, v))
+}
+
+// MessageGTE applies the GTE predicate on the "message" field.
+func MessageGTE(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldGTE(FieldMessage, v))
+}
+
+// MessageLT applies the LT predicate on the "message" field.
+func MessageLT(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldLT(FieldMessage, v))
+}
+
+// MessageLTE applies the LTE predicate on the "message" field.
+func MessageLTE(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldLTE(FieldMessage, v))
+}
+
+// MessageContains applies the Contains predicate on the "message" field.
+func MessageContains(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldContains(FieldMessage, v))
+}
+
+// MessageHasPrefix applies the HasPrefix predicate on the "message" field.
+func MessageHasPrefix(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldHasPrefix(FieldMessage, v))
+}
+
+// MessageHasSuffix applies the HasSuffix predicate on the "message" field.
+func MessageHasSuffix(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldHasSuffix(FieldMessage, v))
+}
+
+// MessageEqualFold applies the EqualFold predicate on the "message" field.
+func MessageEqualFold(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldEqualFold(FieldMessage, v))
+}
+
+// MessageContainsFold applies the ContainsFold predicate on the "message" field.
+func MessageContainsFold(v string) predicate.Newsletter {
+	return predicate.Newsletter(sql.FieldContainsFold(FieldMessage, v))
 }
 
 // And groups predicates with the AND operator between them.

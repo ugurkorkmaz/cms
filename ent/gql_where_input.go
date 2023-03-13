@@ -4,10 +4,13 @@ package ent
 
 import (
 	"app/ent/article"
+	"app/ent/category"
 	"app/ent/comment"
-	"app/ent/meta"
+	"app/ent/gallery"
+	"app/ent/metadata"
 	"app/ent/newsletter"
 	"app/ent/predicate"
+	"app/ent/tag"
 	"app/ent/user"
 	"errors"
 	"fmt"
@@ -33,25 +36,71 @@ type ArticleWhereInput struct {
 	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
 	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
 
-	// "updated_at" field predicates.
-	UpdatedAt      *time.Time  `json:"updatedAt,omitempty"`
-	UpdatedAtNEQ   *time.Time  `json:"updatedAtNEQ,omitempty"`
-	UpdatedAtIn    []time.Time `json:"updatedAtIn,omitempty"`
-	UpdatedAtNotIn []time.Time `json:"updatedAtNotIn,omitempty"`
-	UpdatedAtGT    *time.Time  `json:"updatedAtGT,omitempty"`
-	UpdatedAtGTE   *time.Time  `json:"updatedAtGTE,omitempty"`
-	UpdatedAtLT    *time.Time  `json:"updatedAtLT,omitempty"`
-	UpdatedAtLTE   *time.Time  `json:"updatedAtLTE,omitempty"`
+	// "title" field predicates.
+	Title             *string  `json:"title,omitempty"`
+	TitleNEQ          *string  `json:"titleNEQ,omitempty"`
+	TitleIn           []string `json:"titleIn,omitempty"`
+	TitleNotIn        []string `json:"titleNotIn,omitempty"`
+	TitleGT           *string  `json:"titleGT,omitempty"`
+	TitleGTE          *string  `json:"titleGTE,omitempty"`
+	TitleLT           *string  `json:"titleLT,omitempty"`
+	TitleLTE          *string  `json:"titleLTE,omitempty"`
+	TitleContains     *string  `json:"titleContains,omitempty"`
+	TitleHasPrefix    *string  `json:"titleHasPrefix,omitempty"`
+	TitleHasSuffix    *string  `json:"titleHasSuffix,omitempty"`
+	TitleEqualFold    *string  `json:"titleEqualFold,omitempty"`
+	TitleContainsFold *string  `json:"titleContainsFold,omitempty"`
 
-	// "created_at" field predicates.
-	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
-	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
-	CreatedAtIn    []time.Time `json:"createdAtIn,omitempty"`
-	CreatedAtNotIn []time.Time `json:"createdAtNotIn,omitempty"`
-	CreatedAtGT    *time.Time  `json:"createdAtGT,omitempty"`
-	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
-	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
-	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
+	// "slug" field predicates.
+	Slug             *string  `json:"slug,omitempty"`
+	SlugNEQ          *string  `json:"slugNEQ,omitempty"`
+	SlugIn           []string `json:"slugIn,omitempty"`
+	SlugNotIn        []string `json:"slugNotIn,omitempty"`
+	SlugGT           *string  `json:"slugGT,omitempty"`
+	SlugGTE          *string  `json:"slugGTE,omitempty"`
+	SlugLT           *string  `json:"slugLT,omitempty"`
+	SlugLTE          *string  `json:"slugLTE,omitempty"`
+	SlugContains     *string  `json:"slugContains,omitempty"`
+	SlugHasPrefix    *string  `json:"slugHasPrefix,omitempty"`
+	SlugHasSuffix    *string  `json:"slugHasSuffix,omitempty"`
+	SlugEqualFold    *string  `json:"slugEqualFold,omitempty"`
+	SlugContainsFold *string  `json:"slugContainsFold,omitempty"`
+
+	// "description" field predicates.
+	Description             *string  `json:"description,omitempty"`
+	DescriptionNEQ          *string  `json:"descriptionNEQ,omitempty"`
+	DescriptionIn           []string `json:"descriptionIn,omitempty"`
+	DescriptionNotIn        []string `json:"descriptionNotIn,omitempty"`
+	DescriptionGT           *string  `json:"descriptionGT,omitempty"`
+	DescriptionGTE          *string  `json:"descriptionGTE,omitempty"`
+	DescriptionLT           *string  `json:"descriptionLT,omitempty"`
+	DescriptionLTE          *string  `json:"descriptionLTE,omitempty"`
+	DescriptionContains     *string  `json:"descriptionContains,omitempty"`
+	DescriptionHasPrefix    *string  `json:"descriptionHasPrefix,omitempty"`
+	DescriptionHasSuffix    *string  `json:"descriptionHasSuffix,omitempty"`
+	DescriptionIsNil        bool     `json:"descriptionIsNil,omitempty"`
+	DescriptionNotNil       bool     `json:"descriptionNotNil,omitempty"`
+	DescriptionEqualFold    *string  `json:"descriptionEqualFold,omitempty"`
+	DescriptionContainsFold *string  `json:"descriptionContainsFold,omitempty"`
+
+	// "content" field predicates.
+	Content             *string  `json:"content,omitempty"`
+	ContentNEQ          *string  `json:"contentNEQ,omitempty"`
+	ContentIn           []string `json:"contentIn,omitempty"`
+	ContentNotIn        []string `json:"contentNotIn,omitempty"`
+	ContentGT           *string  `json:"contentGT,omitempty"`
+	ContentGTE          *string  `json:"contentGTE,omitempty"`
+	ContentLT           *string  `json:"contentLT,omitempty"`
+	ContentLTE          *string  `json:"contentLTE,omitempty"`
+	ContentContains     *string  `json:"contentContains,omitempty"`
+	ContentHasPrefix    *string  `json:"contentHasPrefix,omitempty"`
+	ContentHasSuffix    *string  `json:"contentHasSuffix,omitempty"`
+	ContentEqualFold    *string  `json:"contentEqualFold,omitempty"`
+	ContentContainsFold *string  `json:"contentContainsFold,omitempty"`
+
+	// "categories" edge predicates.
+	HasCategories     *bool                 `json:"hasCategories,omitempty"`
+	HasCategoriesWith []*CategoryWhereInput `json:"hasCategoriesWith,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
@@ -149,55 +198,187 @@ func (i *ArticleWhereInput) P() (predicate.Article, error) {
 	if i.IDLTE != nil {
 		predicates = append(predicates, article.IDLTE(*i.IDLTE))
 	}
-	if i.UpdatedAt != nil {
-		predicates = append(predicates, article.UpdatedAtEQ(*i.UpdatedAt))
+	if i.Title != nil {
+		predicates = append(predicates, article.TitleEQ(*i.Title))
 	}
-	if i.UpdatedAtNEQ != nil {
-		predicates = append(predicates, article.UpdatedAtNEQ(*i.UpdatedAtNEQ))
+	if i.TitleNEQ != nil {
+		predicates = append(predicates, article.TitleNEQ(*i.TitleNEQ))
 	}
-	if len(i.UpdatedAtIn) > 0 {
-		predicates = append(predicates, article.UpdatedAtIn(i.UpdatedAtIn...))
+	if len(i.TitleIn) > 0 {
+		predicates = append(predicates, article.TitleIn(i.TitleIn...))
 	}
-	if len(i.UpdatedAtNotIn) > 0 {
-		predicates = append(predicates, article.UpdatedAtNotIn(i.UpdatedAtNotIn...))
+	if len(i.TitleNotIn) > 0 {
+		predicates = append(predicates, article.TitleNotIn(i.TitleNotIn...))
 	}
-	if i.UpdatedAtGT != nil {
-		predicates = append(predicates, article.UpdatedAtGT(*i.UpdatedAtGT))
+	if i.TitleGT != nil {
+		predicates = append(predicates, article.TitleGT(*i.TitleGT))
 	}
-	if i.UpdatedAtGTE != nil {
-		predicates = append(predicates, article.UpdatedAtGTE(*i.UpdatedAtGTE))
+	if i.TitleGTE != nil {
+		predicates = append(predicates, article.TitleGTE(*i.TitleGTE))
 	}
-	if i.UpdatedAtLT != nil {
-		predicates = append(predicates, article.UpdatedAtLT(*i.UpdatedAtLT))
+	if i.TitleLT != nil {
+		predicates = append(predicates, article.TitleLT(*i.TitleLT))
 	}
-	if i.UpdatedAtLTE != nil {
-		predicates = append(predicates, article.UpdatedAtLTE(*i.UpdatedAtLTE))
+	if i.TitleLTE != nil {
+		predicates = append(predicates, article.TitleLTE(*i.TitleLTE))
 	}
-	if i.CreatedAt != nil {
-		predicates = append(predicates, article.CreatedAtEQ(*i.CreatedAt))
+	if i.TitleContains != nil {
+		predicates = append(predicates, article.TitleContains(*i.TitleContains))
 	}
-	if i.CreatedAtNEQ != nil {
-		predicates = append(predicates, article.CreatedAtNEQ(*i.CreatedAtNEQ))
+	if i.TitleHasPrefix != nil {
+		predicates = append(predicates, article.TitleHasPrefix(*i.TitleHasPrefix))
 	}
-	if len(i.CreatedAtIn) > 0 {
-		predicates = append(predicates, article.CreatedAtIn(i.CreatedAtIn...))
+	if i.TitleHasSuffix != nil {
+		predicates = append(predicates, article.TitleHasSuffix(*i.TitleHasSuffix))
 	}
-	if len(i.CreatedAtNotIn) > 0 {
-		predicates = append(predicates, article.CreatedAtNotIn(i.CreatedAtNotIn...))
+	if i.TitleEqualFold != nil {
+		predicates = append(predicates, article.TitleEqualFold(*i.TitleEqualFold))
 	}
-	if i.CreatedAtGT != nil {
-		predicates = append(predicates, article.CreatedAtGT(*i.CreatedAtGT))
+	if i.TitleContainsFold != nil {
+		predicates = append(predicates, article.TitleContainsFold(*i.TitleContainsFold))
 	}
-	if i.CreatedAtGTE != nil {
-		predicates = append(predicates, article.CreatedAtGTE(*i.CreatedAtGTE))
+	if i.Slug != nil {
+		predicates = append(predicates, article.SlugEQ(*i.Slug))
 	}
-	if i.CreatedAtLT != nil {
-		predicates = append(predicates, article.CreatedAtLT(*i.CreatedAtLT))
+	if i.SlugNEQ != nil {
+		predicates = append(predicates, article.SlugNEQ(*i.SlugNEQ))
 	}
-	if i.CreatedAtLTE != nil {
-		predicates = append(predicates, article.CreatedAtLTE(*i.CreatedAtLTE))
+	if len(i.SlugIn) > 0 {
+		predicates = append(predicates, article.SlugIn(i.SlugIn...))
+	}
+	if len(i.SlugNotIn) > 0 {
+		predicates = append(predicates, article.SlugNotIn(i.SlugNotIn...))
+	}
+	if i.SlugGT != nil {
+		predicates = append(predicates, article.SlugGT(*i.SlugGT))
+	}
+	if i.SlugGTE != nil {
+		predicates = append(predicates, article.SlugGTE(*i.SlugGTE))
+	}
+	if i.SlugLT != nil {
+		predicates = append(predicates, article.SlugLT(*i.SlugLT))
+	}
+	if i.SlugLTE != nil {
+		predicates = append(predicates, article.SlugLTE(*i.SlugLTE))
+	}
+	if i.SlugContains != nil {
+		predicates = append(predicates, article.SlugContains(*i.SlugContains))
+	}
+	if i.SlugHasPrefix != nil {
+		predicates = append(predicates, article.SlugHasPrefix(*i.SlugHasPrefix))
+	}
+	if i.SlugHasSuffix != nil {
+		predicates = append(predicates, article.SlugHasSuffix(*i.SlugHasSuffix))
+	}
+	if i.SlugEqualFold != nil {
+		predicates = append(predicates, article.SlugEqualFold(*i.SlugEqualFold))
+	}
+	if i.SlugContainsFold != nil {
+		predicates = append(predicates, article.SlugContainsFold(*i.SlugContainsFold))
+	}
+	if i.Description != nil {
+		predicates = append(predicates, article.DescriptionEQ(*i.Description))
+	}
+	if i.DescriptionNEQ != nil {
+		predicates = append(predicates, article.DescriptionNEQ(*i.DescriptionNEQ))
+	}
+	if len(i.DescriptionIn) > 0 {
+		predicates = append(predicates, article.DescriptionIn(i.DescriptionIn...))
+	}
+	if len(i.DescriptionNotIn) > 0 {
+		predicates = append(predicates, article.DescriptionNotIn(i.DescriptionNotIn...))
+	}
+	if i.DescriptionGT != nil {
+		predicates = append(predicates, article.DescriptionGT(*i.DescriptionGT))
+	}
+	if i.DescriptionGTE != nil {
+		predicates = append(predicates, article.DescriptionGTE(*i.DescriptionGTE))
+	}
+	if i.DescriptionLT != nil {
+		predicates = append(predicates, article.DescriptionLT(*i.DescriptionLT))
+	}
+	if i.DescriptionLTE != nil {
+		predicates = append(predicates, article.DescriptionLTE(*i.DescriptionLTE))
+	}
+	if i.DescriptionContains != nil {
+		predicates = append(predicates, article.DescriptionContains(*i.DescriptionContains))
+	}
+	if i.DescriptionHasPrefix != nil {
+		predicates = append(predicates, article.DescriptionHasPrefix(*i.DescriptionHasPrefix))
+	}
+	if i.DescriptionHasSuffix != nil {
+		predicates = append(predicates, article.DescriptionHasSuffix(*i.DescriptionHasSuffix))
+	}
+	if i.DescriptionIsNil {
+		predicates = append(predicates, article.DescriptionIsNil())
+	}
+	if i.DescriptionNotNil {
+		predicates = append(predicates, article.DescriptionNotNil())
+	}
+	if i.DescriptionEqualFold != nil {
+		predicates = append(predicates, article.DescriptionEqualFold(*i.DescriptionEqualFold))
+	}
+	if i.DescriptionContainsFold != nil {
+		predicates = append(predicates, article.DescriptionContainsFold(*i.DescriptionContainsFold))
+	}
+	if i.Content != nil {
+		predicates = append(predicates, article.ContentEQ(*i.Content))
+	}
+	if i.ContentNEQ != nil {
+		predicates = append(predicates, article.ContentNEQ(*i.ContentNEQ))
+	}
+	if len(i.ContentIn) > 0 {
+		predicates = append(predicates, article.ContentIn(i.ContentIn...))
+	}
+	if len(i.ContentNotIn) > 0 {
+		predicates = append(predicates, article.ContentNotIn(i.ContentNotIn...))
+	}
+	if i.ContentGT != nil {
+		predicates = append(predicates, article.ContentGT(*i.ContentGT))
+	}
+	if i.ContentGTE != nil {
+		predicates = append(predicates, article.ContentGTE(*i.ContentGTE))
+	}
+	if i.ContentLT != nil {
+		predicates = append(predicates, article.ContentLT(*i.ContentLT))
+	}
+	if i.ContentLTE != nil {
+		predicates = append(predicates, article.ContentLTE(*i.ContentLTE))
+	}
+	if i.ContentContains != nil {
+		predicates = append(predicates, article.ContentContains(*i.ContentContains))
+	}
+	if i.ContentHasPrefix != nil {
+		predicates = append(predicates, article.ContentHasPrefix(*i.ContentHasPrefix))
+	}
+	if i.ContentHasSuffix != nil {
+		predicates = append(predicates, article.ContentHasSuffix(*i.ContentHasSuffix))
+	}
+	if i.ContentEqualFold != nil {
+		predicates = append(predicates, article.ContentEqualFold(*i.ContentEqualFold))
+	}
+	if i.ContentContainsFold != nil {
+		predicates = append(predicates, article.ContentContainsFold(*i.ContentContainsFold))
 	}
 
+	if i.HasCategories != nil {
+		p := article.HasCategories()
+		if !*i.HasCategories {
+			p = article.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasCategoriesWith) > 0 {
+		with := make([]predicate.Category, 0, len(i.HasCategoriesWith))
+		for _, w := range i.HasCategoriesWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasCategoriesWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, article.HasCategoriesWith(with...))
+	}
 	switch len(predicates) {
 	case 0:
 		return nil, ErrEmptyArticleWhereInput
@@ -205,6 +386,274 @@ func (i *ArticleWhereInput) P() (predicate.Article, error) {
 		return predicates[0], nil
 	default:
 		return article.And(predicates...), nil
+	}
+}
+
+// CategoryWhereInput represents a where input for filtering Category queries.
+type CategoryWhereInput struct {
+	Predicates []predicate.Category  `json:"-"`
+	Not        *CategoryWhereInput   `json:"not,omitempty"`
+	Or         []*CategoryWhereInput `json:"or,omitempty"`
+	And        []*CategoryWhereInput `json:"and,omitempty"`
+
+	// "id" field predicates.
+	ID      *uuid.UUID  `json:"id,omitempty"`
+	IDNEQ   *uuid.UUID  `json:"idNEQ,omitempty"`
+	IDIn    []uuid.UUID `json:"idIn,omitempty"`
+	IDNotIn []uuid.UUID `json:"idNotIn,omitempty"`
+	IDGT    *uuid.UUID  `json:"idGT,omitempty"`
+	IDGTE   *uuid.UUID  `json:"idGTE,omitempty"`
+	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
+	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
+
+	// "created_at" field predicates.
+	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
+	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
+	CreatedAtIn    []time.Time `json:"createdAtIn,omitempty"`
+	CreatedAtNotIn []time.Time `json:"createdAtNotIn,omitempty"`
+	CreatedAtGT    *time.Time  `json:"createdAtGT,omitempty"`
+	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
+	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
+	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
+
+	// "updated_at" field predicates.
+	UpdatedAt      *time.Time  `json:"updatedAt,omitempty"`
+	UpdatedAtNEQ   *time.Time  `json:"updatedAtNEQ,omitempty"`
+	UpdatedAtIn    []time.Time `json:"updatedAtIn,omitempty"`
+	UpdatedAtNotIn []time.Time `json:"updatedAtNotIn,omitempty"`
+	UpdatedAtGT    *time.Time  `json:"updatedAtGT,omitempty"`
+	UpdatedAtGTE   *time.Time  `json:"updatedAtGTE,omitempty"`
+	UpdatedAtLT    *time.Time  `json:"updatedAtLT,omitempty"`
+	UpdatedAtLTE   *time.Time  `json:"updatedAtLTE,omitempty"`
+
+	// "name" field predicates.
+	Name             *string  `json:"name,omitempty"`
+	NameNEQ          *string  `json:"nameNEQ,omitempty"`
+	NameIn           []string `json:"nameIn,omitempty"`
+	NameNotIn        []string `json:"nameNotIn,omitempty"`
+	NameGT           *string  `json:"nameGT,omitempty"`
+	NameGTE          *string  `json:"nameGTE,omitempty"`
+	NameLT           *string  `json:"nameLT,omitempty"`
+	NameLTE          *string  `json:"nameLTE,omitempty"`
+	NameContains     *string  `json:"nameContains,omitempty"`
+	NameHasPrefix    *string  `json:"nameHasPrefix,omitempty"`
+	NameHasSuffix    *string  `json:"nameHasSuffix,omitempty"`
+	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
+	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
+
+	// "article" edge predicates.
+	HasArticle     *bool                `json:"hasArticle,omitempty"`
+	HasArticleWith []*ArticleWhereInput `json:"hasArticleWith,omitempty"`
+}
+
+// AddPredicates adds custom predicates to the where input to be used during the filtering phase.
+func (i *CategoryWhereInput) AddPredicates(predicates ...predicate.Category) {
+	i.Predicates = append(i.Predicates, predicates...)
+}
+
+// Filter applies the CategoryWhereInput filter on the CategoryQuery builder.
+func (i *CategoryWhereInput) Filter(q *CategoryQuery) (*CategoryQuery, error) {
+	if i == nil {
+		return q, nil
+	}
+	p, err := i.P()
+	if err != nil {
+		if err == ErrEmptyCategoryWhereInput {
+			return q, nil
+		}
+		return nil, err
+	}
+	return q.Where(p), nil
+}
+
+// ErrEmptyCategoryWhereInput is returned in case the CategoryWhereInput is empty.
+var ErrEmptyCategoryWhereInput = errors.New("ent: empty predicate CategoryWhereInput")
+
+// P returns a predicate for filtering categories.
+// An error is returned if the input is empty or invalid.
+func (i *CategoryWhereInput) P() (predicate.Category, error) {
+	var predicates []predicate.Category
+	if i.Not != nil {
+		p, err := i.Not.P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'not'", err)
+		}
+		predicates = append(predicates, category.Not(p))
+	}
+	switch n := len(i.Or); {
+	case n == 1:
+		p, err := i.Or[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'or'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		or := make([]predicate.Category, 0, n)
+		for _, w := range i.Or {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'or'", err)
+			}
+			or = append(or, p)
+		}
+		predicates = append(predicates, category.Or(or...))
+	}
+	switch n := len(i.And); {
+	case n == 1:
+		p, err := i.And[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'and'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		and := make([]predicate.Category, 0, n)
+		for _, w := range i.And {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'and'", err)
+			}
+			and = append(and, p)
+		}
+		predicates = append(predicates, category.And(and...))
+	}
+	predicates = append(predicates, i.Predicates...)
+	if i.ID != nil {
+		predicates = append(predicates, category.IDEQ(*i.ID))
+	}
+	if i.IDNEQ != nil {
+		predicates = append(predicates, category.IDNEQ(*i.IDNEQ))
+	}
+	if len(i.IDIn) > 0 {
+		predicates = append(predicates, category.IDIn(i.IDIn...))
+	}
+	if len(i.IDNotIn) > 0 {
+		predicates = append(predicates, category.IDNotIn(i.IDNotIn...))
+	}
+	if i.IDGT != nil {
+		predicates = append(predicates, category.IDGT(*i.IDGT))
+	}
+	if i.IDGTE != nil {
+		predicates = append(predicates, category.IDGTE(*i.IDGTE))
+	}
+	if i.IDLT != nil {
+		predicates = append(predicates, category.IDLT(*i.IDLT))
+	}
+	if i.IDLTE != nil {
+		predicates = append(predicates, category.IDLTE(*i.IDLTE))
+	}
+	if i.CreatedAt != nil {
+		predicates = append(predicates, category.CreatedAtEQ(*i.CreatedAt))
+	}
+	if i.CreatedAtNEQ != nil {
+		predicates = append(predicates, category.CreatedAtNEQ(*i.CreatedAtNEQ))
+	}
+	if len(i.CreatedAtIn) > 0 {
+		predicates = append(predicates, category.CreatedAtIn(i.CreatedAtIn...))
+	}
+	if len(i.CreatedAtNotIn) > 0 {
+		predicates = append(predicates, category.CreatedAtNotIn(i.CreatedAtNotIn...))
+	}
+	if i.CreatedAtGT != nil {
+		predicates = append(predicates, category.CreatedAtGT(*i.CreatedAtGT))
+	}
+	if i.CreatedAtGTE != nil {
+		predicates = append(predicates, category.CreatedAtGTE(*i.CreatedAtGTE))
+	}
+	if i.CreatedAtLT != nil {
+		predicates = append(predicates, category.CreatedAtLT(*i.CreatedAtLT))
+	}
+	if i.CreatedAtLTE != nil {
+		predicates = append(predicates, category.CreatedAtLTE(*i.CreatedAtLTE))
+	}
+	if i.UpdatedAt != nil {
+		predicates = append(predicates, category.UpdatedAtEQ(*i.UpdatedAt))
+	}
+	if i.UpdatedAtNEQ != nil {
+		predicates = append(predicates, category.UpdatedAtNEQ(*i.UpdatedAtNEQ))
+	}
+	if len(i.UpdatedAtIn) > 0 {
+		predicates = append(predicates, category.UpdatedAtIn(i.UpdatedAtIn...))
+	}
+	if len(i.UpdatedAtNotIn) > 0 {
+		predicates = append(predicates, category.UpdatedAtNotIn(i.UpdatedAtNotIn...))
+	}
+	if i.UpdatedAtGT != nil {
+		predicates = append(predicates, category.UpdatedAtGT(*i.UpdatedAtGT))
+	}
+	if i.UpdatedAtGTE != nil {
+		predicates = append(predicates, category.UpdatedAtGTE(*i.UpdatedAtGTE))
+	}
+	if i.UpdatedAtLT != nil {
+		predicates = append(predicates, category.UpdatedAtLT(*i.UpdatedAtLT))
+	}
+	if i.UpdatedAtLTE != nil {
+		predicates = append(predicates, category.UpdatedAtLTE(*i.UpdatedAtLTE))
+	}
+	if i.Name != nil {
+		predicates = append(predicates, category.NameEQ(*i.Name))
+	}
+	if i.NameNEQ != nil {
+		predicates = append(predicates, category.NameNEQ(*i.NameNEQ))
+	}
+	if len(i.NameIn) > 0 {
+		predicates = append(predicates, category.NameIn(i.NameIn...))
+	}
+	if len(i.NameNotIn) > 0 {
+		predicates = append(predicates, category.NameNotIn(i.NameNotIn...))
+	}
+	if i.NameGT != nil {
+		predicates = append(predicates, category.NameGT(*i.NameGT))
+	}
+	if i.NameGTE != nil {
+		predicates = append(predicates, category.NameGTE(*i.NameGTE))
+	}
+	if i.NameLT != nil {
+		predicates = append(predicates, category.NameLT(*i.NameLT))
+	}
+	if i.NameLTE != nil {
+		predicates = append(predicates, category.NameLTE(*i.NameLTE))
+	}
+	if i.NameContains != nil {
+		predicates = append(predicates, category.NameContains(*i.NameContains))
+	}
+	if i.NameHasPrefix != nil {
+		predicates = append(predicates, category.NameHasPrefix(*i.NameHasPrefix))
+	}
+	if i.NameHasSuffix != nil {
+		predicates = append(predicates, category.NameHasSuffix(*i.NameHasSuffix))
+	}
+	if i.NameEqualFold != nil {
+		predicates = append(predicates, category.NameEqualFold(*i.NameEqualFold))
+	}
+	if i.NameContainsFold != nil {
+		predicates = append(predicates, category.NameContainsFold(*i.NameContainsFold))
+	}
+
+	if i.HasArticle != nil {
+		p := category.HasArticle()
+		if !*i.HasArticle {
+			p = category.Not(p)
+		}
+		predicates = append(predicates, p)
+	}
+	if len(i.HasArticleWith) > 0 {
+		with := make([]predicate.Article, 0, len(i.HasArticleWith))
+		for _, w := range i.HasArticleWith {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'HasArticleWith'", err)
+			}
+			with = append(with, p)
+		}
+		predicates = append(predicates, category.HasArticleWith(with...))
+	}
+	switch len(predicates) {
+	case 0:
+		return nil, ErrEmptyCategoryWhereInput
+	case 1:
+		return predicates[0], nil
+	default:
+		return category.And(predicates...), nil
 	}
 }
 
@@ -225,16 +674,6 @@ type CommentWhereInput struct {
 	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
 	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
 
-	// "updated_at" field predicates.
-	UpdatedAt      *time.Time  `json:"updatedAt,omitempty"`
-	UpdatedAtNEQ   *time.Time  `json:"updatedAtNEQ,omitempty"`
-	UpdatedAtIn    []time.Time `json:"updatedAtIn,omitempty"`
-	UpdatedAtNotIn []time.Time `json:"updatedAtNotIn,omitempty"`
-	UpdatedAtGT    *time.Time  `json:"updatedAtGT,omitempty"`
-	UpdatedAtGTE   *time.Time  `json:"updatedAtGTE,omitempty"`
-	UpdatedAtLT    *time.Time  `json:"updatedAtLT,omitempty"`
-	UpdatedAtLTE   *time.Time  `json:"updatedAtLTE,omitempty"`
-
 	// "created_at" field predicates.
 	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
 	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
@@ -244,6 +683,21 @@ type CommentWhereInput struct {
 	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
 	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
 	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
+
+	// "content" field predicates.
+	Content             *string  `json:"content,omitempty"`
+	ContentNEQ          *string  `json:"contentNEQ,omitempty"`
+	ContentIn           []string `json:"contentIn,omitempty"`
+	ContentNotIn        []string `json:"contentNotIn,omitempty"`
+	ContentGT           *string  `json:"contentGT,omitempty"`
+	ContentGTE          *string  `json:"contentGTE,omitempty"`
+	ContentLT           *string  `json:"contentLT,omitempty"`
+	ContentLTE          *string  `json:"contentLTE,omitempty"`
+	ContentContains     *string  `json:"contentContains,omitempty"`
+	ContentHasPrefix    *string  `json:"contentHasPrefix,omitempty"`
+	ContentHasSuffix    *string  `json:"contentHasSuffix,omitempty"`
+	ContentEqualFold    *string  `json:"contentEqualFold,omitempty"`
+	ContentContainsFold *string  `json:"contentContainsFold,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
@@ -341,30 +795,6 @@ func (i *CommentWhereInput) P() (predicate.Comment, error) {
 	if i.IDLTE != nil {
 		predicates = append(predicates, comment.IDLTE(*i.IDLTE))
 	}
-	if i.UpdatedAt != nil {
-		predicates = append(predicates, comment.UpdatedAtEQ(*i.UpdatedAt))
-	}
-	if i.UpdatedAtNEQ != nil {
-		predicates = append(predicates, comment.UpdatedAtNEQ(*i.UpdatedAtNEQ))
-	}
-	if len(i.UpdatedAtIn) > 0 {
-		predicates = append(predicates, comment.UpdatedAtIn(i.UpdatedAtIn...))
-	}
-	if len(i.UpdatedAtNotIn) > 0 {
-		predicates = append(predicates, comment.UpdatedAtNotIn(i.UpdatedAtNotIn...))
-	}
-	if i.UpdatedAtGT != nil {
-		predicates = append(predicates, comment.UpdatedAtGT(*i.UpdatedAtGT))
-	}
-	if i.UpdatedAtGTE != nil {
-		predicates = append(predicates, comment.UpdatedAtGTE(*i.UpdatedAtGTE))
-	}
-	if i.UpdatedAtLT != nil {
-		predicates = append(predicates, comment.UpdatedAtLT(*i.UpdatedAtLT))
-	}
-	if i.UpdatedAtLTE != nil {
-		predicates = append(predicates, comment.UpdatedAtLTE(*i.UpdatedAtLTE))
-	}
 	if i.CreatedAt != nil {
 		predicates = append(predicates, comment.CreatedAtEQ(*i.CreatedAt))
 	}
@@ -389,6 +819,45 @@ func (i *CommentWhereInput) P() (predicate.Comment, error) {
 	if i.CreatedAtLTE != nil {
 		predicates = append(predicates, comment.CreatedAtLTE(*i.CreatedAtLTE))
 	}
+	if i.Content != nil {
+		predicates = append(predicates, comment.ContentEQ(*i.Content))
+	}
+	if i.ContentNEQ != nil {
+		predicates = append(predicates, comment.ContentNEQ(*i.ContentNEQ))
+	}
+	if len(i.ContentIn) > 0 {
+		predicates = append(predicates, comment.ContentIn(i.ContentIn...))
+	}
+	if len(i.ContentNotIn) > 0 {
+		predicates = append(predicates, comment.ContentNotIn(i.ContentNotIn...))
+	}
+	if i.ContentGT != nil {
+		predicates = append(predicates, comment.ContentGT(*i.ContentGT))
+	}
+	if i.ContentGTE != nil {
+		predicates = append(predicates, comment.ContentGTE(*i.ContentGTE))
+	}
+	if i.ContentLT != nil {
+		predicates = append(predicates, comment.ContentLT(*i.ContentLT))
+	}
+	if i.ContentLTE != nil {
+		predicates = append(predicates, comment.ContentLTE(*i.ContentLTE))
+	}
+	if i.ContentContains != nil {
+		predicates = append(predicates, comment.ContentContains(*i.ContentContains))
+	}
+	if i.ContentHasPrefix != nil {
+		predicates = append(predicates, comment.ContentHasPrefix(*i.ContentHasPrefix))
+	}
+	if i.ContentHasSuffix != nil {
+		predicates = append(predicates, comment.ContentHasSuffix(*i.ContentHasSuffix))
+	}
+	if i.ContentEqualFold != nil {
+		predicates = append(predicates, comment.ContentEqualFold(*i.ContentEqualFold))
+	}
+	if i.ContentContainsFold != nil {
+		predicates = append(predicates, comment.ContentContainsFold(*i.ContentContainsFold))
+	}
 
 	switch len(predicates) {
 	case 0:
@@ -400,12 +869,258 @@ func (i *CommentWhereInput) P() (predicate.Comment, error) {
 	}
 }
 
-// MetaWhereInput represents a where input for filtering Meta queries.
-type MetaWhereInput struct {
-	Predicates []predicate.Meta  `json:"-"`
-	Not        *MetaWhereInput   `json:"not,omitempty"`
-	Or         []*MetaWhereInput `json:"or,omitempty"`
-	And        []*MetaWhereInput `json:"and,omitempty"`
+// GalleryWhereInput represents a where input for filtering Gallery queries.
+type GalleryWhereInput struct {
+	Predicates []predicate.Gallery  `json:"-"`
+	Not        *GalleryWhereInput   `json:"not,omitempty"`
+	Or         []*GalleryWhereInput `json:"or,omitempty"`
+	And        []*GalleryWhereInput `json:"and,omitempty"`
+
+	// "id" field predicates.
+	ID      *uuid.UUID  `json:"id,omitempty"`
+	IDNEQ   *uuid.UUID  `json:"idNEQ,omitempty"`
+	IDIn    []uuid.UUID `json:"idIn,omitempty"`
+	IDNotIn []uuid.UUID `json:"idNotIn,omitempty"`
+	IDGT    *uuid.UUID  `json:"idGT,omitempty"`
+	IDGTE   *uuid.UUID  `json:"idGTE,omitempty"`
+	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
+	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
+
+	// "created_at" field predicates.
+	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
+	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
+	CreatedAtIn    []time.Time `json:"createdAtIn,omitempty"`
+	CreatedAtNotIn []time.Time `json:"createdAtNotIn,omitempty"`
+	CreatedAtGT    *time.Time  `json:"createdAtGT,omitempty"`
+	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
+	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
+	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
+
+	// "updated_at" field predicates.
+	UpdatedAt      *time.Time  `json:"updatedAt,omitempty"`
+	UpdatedAtNEQ   *time.Time  `json:"updatedAtNEQ,omitempty"`
+	UpdatedAtIn    []time.Time `json:"updatedAtIn,omitempty"`
+	UpdatedAtNotIn []time.Time `json:"updatedAtNotIn,omitempty"`
+	UpdatedAtGT    *time.Time  `json:"updatedAtGT,omitempty"`
+	UpdatedAtGTE   *time.Time  `json:"updatedAtGTE,omitempty"`
+	UpdatedAtLT    *time.Time  `json:"updatedAtLT,omitempty"`
+	UpdatedAtLTE   *time.Time  `json:"updatedAtLTE,omitempty"`
+
+	// "name" field predicates.
+	Name             *string  `json:"name,omitempty"`
+	NameNEQ          *string  `json:"nameNEQ,omitempty"`
+	NameIn           []string `json:"nameIn,omitempty"`
+	NameNotIn        []string `json:"nameNotIn,omitempty"`
+	NameGT           *string  `json:"nameGT,omitempty"`
+	NameGTE          *string  `json:"nameGTE,omitempty"`
+	NameLT           *string  `json:"nameLT,omitempty"`
+	NameLTE          *string  `json:"nameLTE,omitempty"`
+	NameContains     *string  `json:"nameContains,omitempty"`
+	NameHasPrefix    *string  `json:"nameHasPrefix,omitempty"`
+	NameHasSuffix    *string  `json:"nameHasSuffix,omitempty"`
+	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
+	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
+}
+
+// AddPredicates adds custom predicates to the where input to be used during the filtering phase.
+func (i *GalleryWhereInput) AddPredicates(predicates ...predicate.Gallery) {
+	i.Predicates = append(i.Predicates, predicates...)
+}
+
+// Filter applies the GalleryWhereInput filter on the GalleryQuery builder.
+func (i *GalleryWhereInput) Filter(q *GalleryQuery) (*GalleryQuery, error) {
+	if i == nil {
+		return q, nil
+	}
+	p, err := i.P()
+	if err != nil {
+		if err == ErrEmptyGalleryWhereInput {
+			return q, nil
+		}
+		return nil, err
+	}
+	return q.Where(p), nil
+}
+
+// ErrEmptyGalleryWhereInput is returned in case the GalleryWhereInput is empty.
+var ErrEmptyGalleryWhereInput = errors.New("ent: empty predicate GalleryWhereInput")
+
+// P returns a predicate for filtering galleries.
+// An error is returned if the input is empty or invalid.
+func (i *GalleryWhereInput) P() (predicate.Gallery, error) {
+	var predicates []predicate.Gallery
+	if i.Not != nil {
+		p, err := i.Not.P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'not'", err)
+		}
+		predicates = append(predicates, gallery.Not(p))
+	}
+	switch n := len(i.Or); {
+	case n == 1:
+		p, err := i.Or[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'or'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		or := make([]predicate.Gallery, 0, n)
+		for _, w := range i.Or {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'or'", err)
+			}
+			or = append(or, p)
+		}
+		predicates = append(predicates, gallery.Or(or...))
+	}
+	switch n := len(i.And); {
+	case n == 1:
+		p, err := i.And[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'and'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		and := make([]predicate.Gallery, 0, n)
+		for _, w := range i.And {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'and'", err)
+			}
+			and = append(and, p)
+		}
+		predicates = append(predicates, gallery.And(and...))
+	}
+	predicates = append(predicates, i.Predicates...)
+	if i.ID != nil {
+		predicates = append(predicates, gallery.IDEQ(*i.ID))
+	}
+	if i.IDNEQ != nil {
+		predicates = append(predicates, gallery.IDNEQ(*i.IDNEQ))
+	}
+	if len(i.IDIn) > 0 {
+		predicates = append(predicates, gallery.IDIn(i.IDIn...))
+	}
+	if len(i.IDNotIn) > 0 {
+		predicates = append(predicates, gallery.IDNotIn(i.IDNotIn...))
+	}
+	if i.IDGT != nil {
+		predicates = append(predicates, gallery.IDGT(*i.IDGT))
+	}
+	if i.IDGTE != nil {
+		predicates = append(predicates, gallery.IDGTE(*i.IDGTE))
+	}
+	if i.IDLT != nil {
+		predicates = append(predicates, gallery.IDLT(*i.IDLT))
+	}
+	if i.IDLTE != nil {
+		predicates = append(predicates, gallery.IDLTE(*i.IDLTE))
+	}
+	if i.CreatedAt != nil {
+		predicates = append(predicates, gallery.CreatedAtEQ(*i.CreatedAt))
+	}
+	if i.CreatedAtNEQ != nil {
+		predicates = append(predicates, gallery.CreatedAtNEQ(*i.CreatedAtNEQ))
+	}
+	if len(i.CreatedAtIn) > 0 {
+		predicates = append(predicates, gallery.CreatedAtIn(i.CreatedAtIn...))
+	}
+	if len(i.CreatedAtNotIn) > 0 {
+		predicates = append(predicates, gallery.CreatedAtNotIn(i.CreatedAtNotIn...))
+	}
+	if i.CreatedAtGT != nil {
+		predicates = append(predicates, gallery.CreatedAtGT(*i.CreatedAtGT))
+	}
+	if i.CreatedAtGTE != nil {
+		predicates = append(predicates, gallery.CreatedAtGTE(*i.CreatedAtGTE))
+	}
+	if i.CreatedAtLT != nil {
+		predicates = append(predicates, gallery.CreatedAtLT(*i.CreatedAtLT))
+	}
+	if i.CreatedAtLTE != nil {
+		predicates = append(predicates, gallery.CreatedAtLTE(*i.CreatedAtLTE))
+	}
+	if i.UpdatedAt != nil {
+		predicates = append(predicates, gallery.UpdatedAtEQ(*i.UpdatedAt))
+	}
+	if i.UpdatedAtNEQ != nil {
+		predicates = append(predicates, gallery.UpdatedAtNEQ(*i.UpdatedAtNEQ))
+	}
+	if len(i.UpdatedAtIn) > 0 {
+		predicates = append(predicates, gallery.UpdatedAtIn(i.UpdatedAtIn...))
+	}
+	if len(i.UpdatedAtNotIn) > 0 {
+		predicates = append(predicates, gallery.UpdatedAtNotIn(i.UpdatedAtNotIn...))
+	}
+	if i.UpdatedAtGT != nil {
+		predicates = append(predicates, gallery.UpdatedAtGT(*i.UpdatedAtGT))
+	}
+	if i.UpdatedAtGTE != nil {
+		predicates = append(predicates, gallery.UpdatedAtGTE(*i.UpdatedAtGTE))
+	}
+	if i.UpdatedAtLT != nil {
+		predicates = append(predicates, gallery.UpdatedAtLT(*i.UpdatedAtLT))
+	}
+	if i.UpdatedAtLTE != nil {
+		predicates = append(predicates, gallery.UpdatedAtLTE(*i.UpdatedAtLTE))
+	}
+	if i.Name != nil {
+		predicates = append(predicates, gallery.NameEQ(*i.Name))
+	}
+	if i.NameNEQ != nil {
+		predicates = append(predicates, gallery.NameNEQ(*i.NameNEQ))
+	}
+	if len(i.NameIn) > 0 {
+		predicates = append(predicates, gallery.NameIn(i.NameIn...))
+	}
+	if len(i.NameNotIn) > 0 {
+		predicates = append(predicates, gallery.NameNotIn(i.NameNotIn...))
+	}
+	if i.NameGT != nil {
+		predicates = append(predicates, gallery.NameGT(*i.NameGT))
+	}
+	if i.NameGTE != nil {
+		predicates = append(predicates, gallery.NameGTE(*i.NameGTE))
+	}
+	if i.NameLT != nil {
+		predicates = append(predicates, gallery.NameLT(*i.NameLT))
+	}
+	if i.NameLTE != nil {
+		predicates = append(predicates, gallery.NameLTE(*i.NameLTE))
+	}
+	if i.NameContains != nil {
+		predicates = append(predicates, gallery.NameContains(*i.NameContains))
+	}
+	if i.NameHasPrefix != nil {
+		predicates = append(predicates, gallery.NameHasPrefix(*i.NameHasPrefix))
+	}
+	if i.NameHasSuffix != nil {
+		predicates = append(predicates, gallery.NameHasSuffix(*i.NameHasSuffix))
+	}
+	if i.NameEqualFold != nil {
+		predicates = append(predicates, gallery.NameEqualFold(*i.NameEqualFold))
+	}
+	if i.NameContainsFold != nil {
+		predicates = append(predicates, gallery.NameContainsFold(*i.NameContainsFold))
+	}
+
+	switch len(predicates) {
+	case 0:
+		return nil, ErrEmptyGalleryWhereInput
+	case 1:
+		return predicates[0], nil
+	default:
+		return gallery.And(predicates...), nil
+	}
+}
+
+// MetadataWhereInput represents a where input for filtering Metadata queries.
+type MetadataWhereInput struct {
+	Predicates []predicate.Metadata  `json:"-"`
+	Not        *MetadataWhereInput   `json:"not,omitempty"`
+	Or         []*MetadataWhereInput `json:"or,omitempty"`
+	And        []*MetadataWhereInput `json:"and,omitempty"`
 
 	// "id" field predicates.
 	ID      *uuid.UUID  `json:"id,omitempty"`
@@ -436,21 +1151,36 @@ type MetaWhereInput struct {
 	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
 	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
 	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
+
+	// "title" field predicates.
+	Title             *string  `json:"title,omitempty"`
+	TitleNEQ          *string  `json:"titleNEQ,omitempty"`
+	TitleIn           []string `json:"titleIn,omitempty"`
+	TitleNotIn        []string `json:"titleNotIn,omitempty"`
+	TitleGT           *string  `json:"titleGT,omitempty"`
+	TitleGTE          *string  `json:"titleGTE,omitempty"`
+	TitleLT           *string  `json:"titleLT,omitempty"`
+	TitleLTE          *string  `json:"titleLTE,omitempty"`
+	TitleContains     *string  `json:"titleContains,omitempty"`
+	TitleHasPrefix    *string  `json:"titleHasPrefix,omitempty"`
+	TitleHasSuffix    *string  `json:"titleHasSuffix,omitempty"`
+	TitleEqualFold    *string  `json:"titleEqualFold,omitempty"`
+	TitleContainsFold *string  `json:"titleContainsFold,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
-func (i *MetaWhereInput) AddPredicates(predicates ...predicate.Meta) {
+func (i *MetadataWhereInput) AddPredicates(predicates ...predicate.Metadata) {
 	i.Predicates = append(i.Predicates, predicates...)
 }
 
-// Filter applies the MetaWhereInput filter on the MetaQuery builder.
-func (i *MetaWhereInput) Filter(q *MetaQuery) (*MetaQuery, error) {
+// Filter applies the MetadataWhereInput filter on the MetadataQuery builder.
+func (i *MetadataWhereInput) Filter(q *MetadataQuery) (*MetadataQuery, error) {
 	if i == nil {
 		return q, nil
 	}
 	p, err := i.P()
 	if err != nil {
-		if err == ErrEmptyMetaWhereInput {
+		if err == ErrEmptyMetadataWhereInput {
 			return q, nil
 		}
 		return nil, err
@@ -458,19 +1188,19 @@ func (i *MetaWhereInput) Filter(q *MetaQuery) (*MetaQuery, error) {
 	return q.Where(p), nil
 }
 
-// ErrEmptyMetaWhereInput is returned in case the MetaWhereInput is empty.
-var ErrEmptyMetaWhereInput = errors.New("ent: empty predicate MetaWhereInput")
+// ErrEmptyMetadataWhereInput is returned in case the MetadataWhereInput is empty.
+var ErrEmptyMetadataWhereInput = errors.New("ent: empty predicate MetadataWhereInput")
 
-// P returns a predicate for filtering metaslice.
+// P returns a predicate for filtering metadataslice.
 // An error is returned if the input is empty or invalid.
-func (i *MetaWhereInput) P() (predicate.Meta, error) {
-	var predicates []predicate.Meta
+func (i *MetadataWhereInput) P() (predicate.Metadata, error) {
+	var predicates []predicate.Metadata
 	if i.Not != nil {
 		p, err := i.Not.P()
 		if err != nil {
 			return nil, fmt.Errorf("%w: field 'not'", err)
 		}
-		predicates = append(predicates, meta.Not(p))
+		predicates = append(predicates, metadata.Not(p))
 	}
 	switch n := len(i.Or); {
 	case n == 1:
@@ -480,7 +1210,7 @@ func (i *MetaWhereInput) P() (predicate.Meta, error) {
 		}
 		predicates = append(predicates, p)
 	case n > 1:
-		or := make([]predicate.Meta, 0, n)
+		or := make([]predicate.Metadata, 0, n)
 		for _, w := range i.Or {
 			p, err := w.P()
 			if err != nil {
@@ -488,7 +1218,7 @@ func (i *MetaWhereInput) P() (predicate.Meta, error) {
 			}
 			or = append(or, p)
 		}
-		predicates = append(predicates, meta.Or(or...))
+		predicates = append(predicates, metadata.Or(or...))
 	}
 	switch n := len(i.And); {
 	case n == 1:
@@ -498,7 +1228,7 @@ func (i *MetaWhereInput) P() (predicate.Meta, error) {
 		}
 		predicates = append(predicates, p)
 	case n > 1:
-		and := make([]predicate.Meta, 0, n)
+		and := make([]predicate.Metadata, 0, n)
 		for _, w := range i.And {
 			p, err := w.P()
 			if err != nil {
@@ -506,89 +1236,128 @@ func (i *MetaWhereInput) P() (predicate.Meta, error) {
 			}
 			and = append(and, p)
 		}
-		predicates = append(predicates, meta.And(and...))
+		predicates = append(predicates, metadata.And(and...))
 	}
 	predicates = append(predicates, i.Predicates...)
 	if i.ID != nil {
-		predicates = append(predicates, meta.IDEQ(*i.ID))
+		predicates = append(predicates, metadata.IDEQ(*i.ID))
 	}
 	if i.IDNEQ != nil {
-		predicates = append(predicates, meta.IDNEQ(*i.IDNEQ))
+		predicates = append(predicates, metadata.IDNEQ(*i.IDNEQ))
 	}
 	if len(i.IDIn) > 0 {
-		predicates = append(predicates, meta.IDIn(i.IDIn...))
+		predicates = append(predicates, metadata.IDIn(i.IDIn...))
 	}
 	if len(i.IDNotIn) > 0 {
-		predicates = append(predicates, meta.IDNotIn(i.IDNotIn...))
+		predicates = append(predicates, metadata.IDNotIn(i.IDNotIn...))
 	}
 	if i.IDGT != nil {
-		predicates = append(predicates, meta.IDGT(*i.IDGT))
+		predicates = append(predicates, metadata.IDGT(*i.IDGT))
 	}
 	if i.IDGTE != nil {
-		predicates = append(predicates, meta.IDGTE(*i.IDGTE))
+		predicates = append(predicates, metadata.IDGTE(*i.IDGTE))
 	}
 	if i.IDLT != nil {
-		predicates = append(predicates, meta.IDLT(*i.IDLT))
+		predicates = append(predicates, metadata.IDLT(*i.IDLT))
 	}
 	if i.IDLTE != nil {
-		predicates = append(predicates, meta.IDLTE(*i.IDLTE))
+		predicates = append(predicates, metadata.IDLTE(*i.IDLTE))
 	}
 	if i.UpdatedAt != nil {
-		predicates = append(predicates, meta.UpdatedAtEQ(*i.UpdatedAt))
+		predicates = append(predicates, metadata.UpdatedAtEQ(*i.UpdatedAt))
 	}
 	if i.UpdatedAtNEQ != nil {
-		predicates = append(predicates, meta.UpdatedAtNEQ(*i.UpdatedAtNEQ))
+		predicates = append(predicates, metadata.UpdatedAtNEQ(*i.UpdatedAtNEQ))
 	}
 	if len(i.UpdatedAtIn) > 0 {
-		predicates = append(predicates, meta.UpdatedAtIn(i.UpdatedAtIn...))
+		predicates = append(predicates, metadata.UpdatedAtIn(i.UpdatedAtIn...))
 	}
 	if len(i.UpdatedAtNotIn) > 0 {
-		predicates = append(predicates, meta.UpdatedAtNotIn(i.UpdatedAtNotIn...))
+		predicates = append(predicates, metadata.UpdatedAtNotIn(i.UpdatedAtNotIn...))
 	}
 	if i.UpdatedAtGT != nil {
-		predicates = append(predicates, meta.UpdatedAtGT(*i.UpdatedAtGT))
+		predicates = append(predicates, metadata.UpdatedAtGT(*i.UpdatedAtGT))
 	}
 	if i.UpdatedAtGTE != nil {
-		predicates = append(predicates, meta.UpdatedAtGTE(*i.UpdatedAtGTE))
+		predicates = append(predicates, metadata.UpdatedAtGTE(*i.UpdatedAtGTE))
 	}
 	if i.UpdatedAtLT != nil {
-		predicates = append(predicates, meta.UpdatedAtLT(*i.UpdatedAtLT))
+		predicates = append(predicates, metadata.UpdatedAtLT(*i.UpdatedAtLT))
 	}
 	if i.UpdatedAtLTE != nil {
-		predicates = append(predicates, meta.UpdatedAtLTE(*i.UpdatedAtLTE))
+		predicates = append(predicates, metadata.UpdatedAtLTE(*i.UpdatedAtLTE))
 	}
 	if i.CreatedAt != nil {
-		predicates = append(predicates, meta.CreatedAtEQ(*i.CreatedAt))
+		predicates = append(predicates, metadata.CreatedAtEQ(*i.CreatedAt))
 	}
 	if i.CreatedAtNEQ != nil {
-		predicates = append(predicates, meta.CreatedAtNEQ(*i.CreatedAtNEQ))
+		predicates = append(predicates, metadata.CreatedAtNEQ(*i.CreatedAtNEQ))
 	}
 	if len(i.CreatedAtIn) > 0 {
-		predicates = append(predicates, meta.CreatedAtIn(i.CreatedAtIn...))
+		predicates = append(predicates, metadata.CreatedAtIn(i.CreatedAtIn...))
 	}
 	if len(i.CreatedAtNotIn) > 0 {
-		predicates = append(predicates, meta.CreatedAtNotIn(i.CreatedAtNotIn...))
+		predicates = append(predicates, metadata.CreatedAtNotIn(i.CreatedAtNotIn...))
 	}
 	if i.CreatedAtGT != nil {
-		predicates = append(predicates, meta.CreatedAtGT(*i.CreatedAtGT))
+		predicates = append(predicates, metadata.CreatedAtGT(*i.CreatedAtGT))
 	}
 	if i.CreatedAtGTE != nil {
-		predicates = append(predicates, meta.CreatedAtGTE(*i.CreatedAtGTE))
+		predicates = append(predicates, metadata.CreatedAtGTE(*i.CreatedAtGTE))
 	}
 	if i.CreatedAtLT != nil {
-		predicates = append(predicates, meta.CreatedAtLT(*i.CreatedAtLT))
+		predicates = append(predicates, metadata.CreatedAtLT(*i.CreatedAtLT))
 	}
 	if i.CreatedAtLTE != nil {
-		predicates = append(predicates, meta.CreatedAtLTE(*i.CreatedAtLTE))
+		predicates = append(predicates, metadata.CreatedAtLTE(*i.CreatedAtLTE))
+	}
+	if i.Title != nil {
+		predicates = append(predicates, metadata.TitleEQ(*i.Title))
+	}
+	if i.TitleNEQ != nil {
+		predicates = append(predicates, metadata.TitleNEQ(*i.TitleNEQ))
+	}
+	if len(i.TitleIn) > 0 {
+		predicates = append(predicates, metadata.TitleIn(i.TitleIn...))
+	}
+	if len(i.TitleNotIn) > 0 {
+		predicates = append(predicates, metadata.TitleNotIn(i.TitleNotIn...))
+	}
+	if i.TitleGT != nil {
+		predicates = append(predicates, metadata.TitleGT(*i.TitleGT))
+	}
+	if i.TitleGTE != nil {
+		predicates = append(predicates, metadata.TitleGTE(*i.TitleGTE))
+	}
+	if i.TitleLT != nil {
+		predicates = append(predicates, metadata.TitleLT(*i.TitleLT))
+	}
+	if i.TitleLTE != nil {
+		predicates = append(predicates, metadata.TitleLTE(*i.TitleLTE))
+	}
+	if i.TitleContains != nil {
+		predicates = append(predicates, metadata.TitleContains(*i.TitleContains))
+	}
+	if i.TitleHasPrefix != nil {
+		predicates = append(predicates, metadata.TitleHasPrefix(*i.TitleHasPrefix))
+	}
+	if i.TitleHasSuffix != nil {
+		predicates = append(predicates, metadata.TitleHasSuffix(*i.TitleHasSuffix))
+	}
+	if i.TitleEqualFold != nil {
+		predicates = append(predicates, metadata.TitleEqualFold(*i.TitleEqualFold))
+	}
+	if i.TitleContainsFold != nil {
+		predicates = append(predicates, metadata.TitleContainsFold(*i.TitleContainsFold))
 	}
 
 	switch len(predicates) {
 	case 0:
-		return nil, ErrEmptyMetaWhereInput
+		return nil, ErrEmptyMetadataWhereInput
 	case 1:
 		return predicates[0], nil
 	default:
-		return meta.And(predicates...), nil
+		return metadata.And(predicates...), nil
 	}
 }
 
@@ -628,6 +1397,21 @@ type NewsletterWhereInput struct {
 	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
 	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
 	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
+
+	// "message" field predicates.
+	Message             *string  `json:"message,omitempty"`
+	MessageNEQ          *string  `json:"messageNEQ,omitempty"`
+	MessageIn           []string `json:"messageIn,omitempty"`
+	MessageNotIn        []string `json:"messageNotIn,omitempty"`
+	MessageGT           *string  `json:"messageGT,omitempty"`
+	MessageGTE          *string  `json:"messageGTE,omitempty"`
+	MessageLT           *string  `json:"messageLT,omitempty"`
+	MessageLTE          *string  `json:"messageLTE,omitempty"`
+	MessageContains     *string  `json:"messageContains,omitempty"`
+	MessageHasPrefix    *string  `json:"messageHasPrefix,omitempty"`
+	MessageHasSuffix    *string  `json:"messageHasSuffix,omitempty"`
+	MessageEqualFold    *string  `json:"messageEqualFold,omitempty"`
+	MessageContainsFold *string  `json:"messageContainsFold,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
@@ -773,6 +1557,45 @@ func (i *NewsletterWhereInput) P() (predicate.Newsletter, error) {
 	if i.CreatedAtLTE != nil {
 		predicates = append(predicates, newsletter.CreatedAtLTE(*i.CreatedAtLTE))
 	}
+	if i.Message != nil {
+		predicates = append(predicates, newsletter.MessageEQ(*i.Message))
+	}
+	if i.MessageNEQ != nil {
+		predicates = append(predicates, newsletter.MessageNEQ(*i.MessageNEQ))
+	}
+	if len(i.MessageIn) > 0 {
+		predicates = append(predicates, newsletter.MessageIn(i.MessageIn...))
+	}
+	if len(i.MessageNotIn) > 0 {
+		predicates = append(predicates, newsletter.MessageNotIn(i.MessageNotIn...))
+	}
+	if i.MessageGT != nil {
+		predicates = append(predicates, newsletter.MessageGT(*i.MessageGT))
+	}
+	if i.MessageGTE != nil {
+		predicates = append(predicates, newsletter.MessageGTE(*i.MessageGTE))
+	}
+	if i.MessageLT != nil {
+		predicates = append(predicates, newsletter.MessageLT(*i.MessageLT))
+	}
+	if i.MessageLTE != nil {
+		predicates = append(predicates, newsletter.MessageLTE(*i.MessageLTE))
+	}
+	if i.MessageContains != nil {
+		predicates = append(predicates, newsletter.MessageContains(*i.MessageContains))
+	}
+	if i.MessageHasPrefix != nil {
+		predicates = append(predicates, newsletter.MessageHasPrefix(*i.MessageHasPrefix))
+	}
+	if i.MessageHasSuffix != nil {
+		predicates = append(predicates, newsletter.MessageHasSuffix(*i.MessageHasSuffix))
+	}
+	if i.MessageEqualFold != nil {
+		predicates = append(predicates, newsletter.MessageEqualFold(*i.MessageEqualFold))
+	}
+	if i.MessageContainsFold != nil {
+		predicates = append(predicates, newsletter.MessageContainsFold(*i.MessageContainsFold))
+	}
 
 	switch len(predicates) {
 	case 0:
@@ -781,6 +1604,252 @@ func (i *NewsletterWhereInput) P() (predicate.Newsletter, error) {
 		return predicates[0], nil
 	default:
 		return newsletter.And(predicates...), nil
+	}
+}
+
+// TagWhereInput represents a where input for filtering Tag queries.
+type TagWhereInput struct {
+	Predicates []predicate.Tag  `json:"-"`
+	Not        *TagWhereInput   `json:"not,omitempty"`
+	Or         []*TagWhereInput `json:"or,omitempty"`
+	And        []*TagWhereInput `json:"and,omitempty"`
+
+	// "id" field predicates.
+	ID      *uuid.UUID  `json:"id,omitempty"`
+	IDNEQ   *uuid.UUID  `json:"idNEQ,omitempty"`
+	IDIn    []uuid.UUID `json:"idIn,omitempty"`
+	IDNotIn []uuid.UUID `json:"idNotIn,omitempty"`
+	IDGT    *uuid.UUID  `json:"idGT,omitempty"`
+	IDGTE   *uuid.UUID  `json:"idGTE,omitempty"`
+	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
+	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
+
+	// "created_at" field predicates.
+	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
+	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
+	CreatedAtIn    []time.Time `json:"createdAtIn,omitempty"`
+	CreatedAtNotIn []time.Time `json:"createdAtNotIn,omitempty"`
+	CreatedAtGT    *time.Time  `json:"createdAtGT,omitempty"`
+	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
+	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
+	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
+
+	// "updated_at" field predicates.
+	UpdatedAt      *time.Time  `json:"updatedAt,omitempty"`
+	UpdatedAtNEQ   *time.Time  `json:"updatedAtNEQ,omitempty"`
+	UpdatedAtIn    []time.Time `json:"updatedAtIn,omitempty"`
+	UpdatedAtNotIn []time.Time `json:"updatedAtNotIn,omitempty"`
+	UpdatedAtGT    *time.Time  `json:"updatedAtGT,omitempty"`
+	UpdatedAtGTE   *time.Time  `json:"updatedAtGTE,omitempty"`
+	UpdatedAtLT    *time.Time  `json:"updatedAtLT,omitempty"`
+	UpdatedAtLTE   *time.Time  `json:"updatedAtLTE,omitempty"`
+
+	// "name" field predicates.
+	Name             *string  `json:"name,omitempty"`
+	NameNEQ          *string  `json:"nameNEQ,omitempty"`
+	NameIn           []string `json:"nameIn,omitempty"`
+	NameNotIn        []string `json:"nameNotIn,omitempty"`
+	NameGT           *string  `json:"nameGT,omitempty"`
+	NameGTE          *string  `json:"nameGTE,omitempty"`
+	NameLT           *string  `json:"nameLT,omitempty"`
+	NameLTE          *string  `json:"nameLTE,omitempty"`
+	NameContains     *string  `json:"nameContains,omitempty"`
+	NameHasPrefix    *string  `json:"nameHasPrefix,omitempty"`
+	NameHasSuffix    *string  `json:"nameHasSuffix,omitempty"`
+	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
+	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
+}
+
+// AddPredicates adds custom predicates to the where input to be used during the filtering phase.
+func (i *TagWhereInput) AddPredicates(predicates ...predicate.Tag) {
+	i.Predicates = append(i.Predicates, predicates...)
+}
+
+// Filter applies the TagWhereInput filter on the TagQuery builder.
+func (i *TagWhereInput) Filter(q *TagQuery) (*TagQuery, error) {
+	if i == nil {
+		return q, nil
+	}
+	p, err := i.P()
+	if err != nil {
+		if err == ErrEmptyTagWhereInput {
+			return q, nil
+		}
+		return nil, err
+	}
+	return q.Where(p), nil
+}
+
+// ErrEmptyTagWhereInput is returned in case the TagWhereInput is empty.
+var ErrEmptyTagWhereInput = errors.New("ent: empty predicate TagWhereInput")
+
+// P returns a predicate for filtering tags.
+// An error is returned if the input is empty or invalid.
+func (i *TagWhereInput) P() (predicate.Tag, error) {
+	var predicates []predicate.Tag
+	if i.Not != nil {
+		p, err := i.Not.P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'not'", err)
+		}
+		predicates = append(predicates, tag.Not(p))
+	}
+	switch n := len(i.Or); {
+	case n == 1:
+		p, err := i.Or[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'or'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		or := make([]predicate.Tag, 0, n)
+		for _, w := range i.Or {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'or'", err)
+			}
+			or = append(or, p)
+		}
+		predicates = append(predicates, tag.Or(or...))
+	}
+	switch n := len(i.And); {
+	case n == 1:
+		p, err := i.And[0].P()
+		if err != nil {
+			return nil, fmt.Errorf("%w: field 'and'", err)
+		}
+		predicates = append(predicates, p)
+	case n > 1:
+		and := make([]predicate.Tag, 0, n)
+		for _, w := range i.And {
+			p, err := w.P()
+			if err != nil {
+				return nil, fmt.Errorf("%w: field 'and'", err)
+			}
+			and = append(and, p)
+		}
+		predicates = append(predicates, tag.And(and...))
+	}
+	predicates = append(predicates, i.Predicates...)
+	if i.ID != nil {
+		predicates = append(predicates, tag.IDEQ(*i.ID))
+	}
+	if i.IDNEQ != nil {
+		predicates = append(predicates, tag.IDNEQ(*i.IDNEQ))
+	}
+	if len(i.IDIn) > 0 {
+		predicates = append(predicates, tag.IDIn(i.IDIn...))
+	}
+	if len(i.IDNotIn) > 0 {
+		predicates = append(predicates, tag.IDNotIn(i.IDNotIn...))
+	}
+	if i.IDGT != nil {
+		predicates = append(predicates, tag.IDGT(*i.IDGT))
+	}
+	if i.IDGTE != nil {
+		predicates = append(predicates, tag.IDGTE(*i.IDGTE))
+	}
+	if i.IDLT != nil {
+		predicates = append(predicates, tag.IDLT(*i.IDLT))
+	}
+	if i.IDLTE != nil {
+		predicates = append(predicates, tag.IDLTE(*i.IDLTE))
+	}
+	if i.CreatedAt != nil {
+		predicates = append(predicates, tag.CreatedAtEQ(*i.CreatedAt))
+	}
+	if i.CreatedAtNEQ != nil {
+		predicates = append(predicates, tag.CreatedAtNEQ(*i.CreatedAtNEQ))
+	}
+	if len(i.CreatedAtIn) > 0 {
+		predicates = append(predicates, tag.CreatedAtIn(i.CreatedAtIn...))
+	}
+	if len(i.CreatedAtNotIn) > 0 {
+		predicates = append(predicates, tag.CreatedAtNotIn(i.CreatedAtNotIn...))
+	}
+	if i.CreatedAtGT != nil {
+		predicates = append(predicates, tag.CreatedAtGT(*i.CreatedAtGT))
+	}
+	if i.CreatedAtGTE != nil {
+		predicates = append(predicates, tag.CreatedAtGTE(*i.CreatedAtGTE))
+	}
+	if i.CreatedAtLT != nil {
+		predicates = append(predicates, tag.CreatedAtLT(*i.CreatedAtLT))
+	}
+	if i.CreatedAtLTE != nil {
+		predicates = append(predicates, tag.CreatedAtLTE(*i.CreatedAtLTE))
+	}
+	if i.UpdatedAt != nil {
+		predicates = append(predicates, tag.UpdatedAtEQ(*i.UpdatedAt))
+	}
+	if i.UpdatedAtNEQ != nil {
+		predicates = append(predicates, tag.UpdatedAtNEQ(*i.UpdatedAtNEQ))
+	}
+	if len(i.UpdatedAtIn) > 0 {
+		predicates = append(predicates, tag.UpdatedAtIn(i.UpdatedAtIn...))
+	}
+	if len(i.UpdatedAtNotIn) > 0 {
+		predicates = append(predicates, tag.UpdatedAtNotIn(i.UpdatedAtNotIn...))
+	}
+	if i.UpdatedAtGT != nil {
+		predicates = append(predicates, tag.UpdatedAtGT(*i.UpdatedAtGT))
+	}
+	if i.UpdatedAtGTE != nil {
+		predicates = append(predicates, tag.UpdatedAtGTE(*i.UpdatedAtGTE))
+	}
+	if i.UpdatedAtLT != nil {
+		predicates = append(predicates, tag.UpdatedAtLT(*i.UpdatedAtLT))
+	}
+	if i.UpdatedAtLTE != nil {
+		predicates = append(predicates, tag.UpdatedAtLTE(*i.UpdatedAtLTE))
+	}
+	if i.Name != nil {
+		predicates = append(predicates, tag.NameEQ(*i.Name))
+	}
+	if i.NameNEQ != nil {
+		predicates = append(predicates, tag.NameNEQ(*i.NameNEQ))
+	}
+	if len(i.NameIn) > 0 {
+		predicates = append(predicates, tag.NameIn(i.NameIn...))
+	}
+	if len(i.NameNotIn) > 0 {
+		predicates = append(predicates, tag.NameNotIn(i.NameNotIn...))
+	}
+	if i.NameGT != nil {
+		predicates = append(predicates, tag.NameGT(*i.NameGT))
+	}
+	if i.NameGTE != nil {
+		predicates = append(predicates, tag.NameGTE(*i.NameGTE))
+	}
+	if i.NameLT != nil {
+		predicates = append(predicates, tag.NameLT(*i.NameLT))
+	}
+	if i.NameLTE != nil {
+		predicates = append(predicates, tag.NameLTE(*i.NameLTE))
+	}
+	if i.NameContains != nil {
+		predicates = append(predicates, tag.NameContains(*i.NameContains))
+	}
+	if i.NameHasPrefix != nil {
+		predicates = append(predicates, tag.NameHasPrefix(*i.NameHasPrefix))
+	}
+	if i.NameHasSuffix != nil {
+		predicates = append(predicates, tag.NameHasSuffix(*i.NameHasSuffix))
+	}
+	if i.NameEqualFold != nil {
+		predicates = append(predicates, tag.NameEqualFold(*i.NameEqualFold))
+	}
+	if i.NameContainsFold != nil {
+		predicates = append(predicates, tag.NameContainsFold(*i.NameContainsFold))
+	}
+
+	switch len(predicates) {
+	case 0:
+		return nil, ErrEmptyTagWhereInput
+	case 1:
+		return predicates[0], nil
+	default:
+		return tag.And(predicates...), nil
 	}
 }
 
@@ -820,6 +1889,86 @@ type UserWhereInput struct {
 	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
 	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
 	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
+
+	// "name" field predicates.
+	Name             *string  `json:"name,omitempty"`
+	NameNEQ          *string  `json:"nameNEQ,omitempty"`
+	NameIn           []string `json:"nameIn,omitempty"`
+	NameNotIn        []string `json:"nameNotIn,omitempty"`
+	NameGT           *string  `json:"nameGT,omitempty"`
+	NameGTE          *string  `json:"nameGTE,omitempty"`
+	NameLT           *string  `json:"nameLT,omitempty"`
+	NameLTE          *string  `json:"nameLTE,omitempty"`
+	NameContains     *string  `json:"nameContains,omitempty"`
+	NameHasPrefix    *string  `json:"nameHasPrefix,omitempty"`
+	NameHasSuffix    *string  `json:"nameHasSuffix,omitempty"`
+	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
+	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
+
+	// "email" field predicates.
+	Email             *string  `json:"email,omitempty"`
+	EmailNEQ          *string  `json:"emailNEQ,omitempty"`
+	EmailIn           []string `json:"emailIn,omitempty"`
+	EmailNotIn        []string `json:"emailNotIn,omitempty"`
+	EmailGT           *string  `json:"emailGT,omitempty"`
+	EmailGTE          *string  `json:"emailGTE,omitempty"`
+	EmailLT           *string  `json:"emailLT,omitempty"`
+	EmailLTE          *string  `json:"emailLTE,omitempty"`
+	EmailContains     *string  `json:"emailContains,omitempty"`
+	EmailHasPrefix    *string  `json:"emailHasPrefix,omitempty"`
+	EmailHasSuffix    *string  `json:"emailHasSuffix,omitempty"`
+	EmailEqualFold    *string  `json:"emailEqualFold,omitempty"`
+	EmailContainsFold *string  `json:"emailContainsFold,omitempty"`
+
+	// "password" field predicates.
+	Password             *string  `json:"password,omitempty"`
+	PasswordNEQ          *string  `json:"passwordNEQ,omitempty"`
+	PasswordIn           []string `json:"passwordIn,omitempty"`
+	PasswordNotIn        []string `json:"passwordNotIn,omitempty"`
+	PasswordGT           *string  `json:"passwordGT,omitempty"`
+	PasswordGTE          *string  `json:"passwordGTE,omitempty"`
+	PasswordLT           *string  `json:"passwordLT,omitempty"`
+	PasswordLTE          *string  `json:"passwordLTE,omitempty"`
+	PasswordContains     *string  `json:"passwordContains,omitempty"`
+	PasswordHasPrefix    *string  `json:"passwordHasPrefix,omitempty"`
+	PasswordHasSuffix    *string  `json:"passwordHasSuffix,omitempty"`
+	PasswordEqualFold    *string  `json:"passwordEqualFold,omitempty"`
+	PasswordContainsFold *string  `json:"passwordContainsFold,omitempty"`
+
+	// "role" field predicates.
+	Role      *user.Role  `json:"role,omitempty"`
+	RoleNEQ   *user.Role  `json:"roleNEQ,omitempty"`
+	RoleIn    []user.Role `json:"roleIn,omitempty"`
+	RoleNotIn []user.Role `json:"roleNotIn,omitempty"`
+
+	// "token" field predicates.
+	Token             *string  `json:"token,omitempty"`
+	TokenNEQ          *string  `json:"tokenNEQ,omitempty"`
+	TokenIn           []string `json:"tokenIn,omitempty"`
+	TokenNotIn        []string `json:"tokenNotIn,omitempty"`
+	TokenGT           *string  `json:"tokenGT,omitempty"`
+	TokenGTE          *string  `json:"tokenGTE,omitempty"`
+	TokenLT           *string  `json:"tokenLT,omitempty"`
+	TokenLTE          *string  `json:"tokenLTE,omitempty"`
+	TokenContains     *string  `json:"tokenContains,omitempty"`
+	TokenHasPrefix    *string  `json:"tokenHasPrefix,omitempty"`
+	TokenHasSuffix    *string  `json:"tokenHasSuffix,omitempty"`
+	TokenIsNil        bool     `json:"tokenIsNil,omitempty"`
+	TokenNotNil       bool     `json:"tokenNotNil,omitempty"`
+	TokenEqualFold    *string  `json:"tokenEqualFold,omitempty"`
+	TokenContainsFold *string  `json:"tokenContainsFold,omitempty"`
+
+	// "token_expired" field predicates.
+	TokenExpired       *time.Time  `json:"tokenExpired,omitempty"`
+	TokenExpiredNEQ    *time.Time  `json:"tokenExpiredNEQ,omitempty"`
+	TokenExpiredIn     []time.Time `json:"tokenExpiredIn,omitempty"`
+	TokenExpiredNotIn  []time.Time `json:"tokenExpiredNotIn,omitempty"`
+	TokenExpiredGT     *time.Time  `json:"tokenExpiredGT,omitempty"`
+	TokenExpiredGTE    *time.Time  `json:"tokenExpiredGTE,omitempty"`
+	TokenExpiredLT     *time.Time  `json:"tokenExpiredLT,omitempty"`
+	TokenExpiredLTE    *time.Time  `json:"tokenExpiredLTE,omitempty"`
+	TokenExpiredIsNil  bool        `json:"tokenExpiredIsNil,omitempty"`
+	TokenExpiredNotNil bool        `json:"tokenExpiredNotNil,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
@@ -964,6 +2113,210 @@ func (i *UserWhereInput) P() (predicate.User, error) {
 	}
 	if i.CreatedAtLTE != nil {
 		predicates = append(predicates, user.CreatedAtLTE(*i.CreatedAtLTE))
+	}
+	if i.Name != nil {
+		predicates = append(predicates, user.NameEQ(*i.Name))
+	}
+	if i.NameNEQ != nil {
+		predicates = append(predicates, user.NameNEQ(*i.NameNEQ))
+	}
+	if len(i.NameIn) > 0 {
+		predicates = append(predicates, user.NameIn(i.NameIn...))
+	}
+	if len(i.NameNotIn) > 0 {
+		predicates = append(predicates, user.NameNotIn(i.NameNotIn...))
+	}
+	if i.NameGT != nil {
+		predicates = append(predicates, user.NameGT(*i.NameGT))
+	}
+	if i.NameGTE != nil {
+		predicates = append(predicates, user.NameGTE(*i.NameGTE))
+	}
+	if i.NameLT != nil {
+		predicates = append(predicates, user.NameLT(*i.NameLT))
+	}
+	if i.NameLTE != nil {
+		predicates = append(predicates, user.NameLTE(*i.NameLTE))
+	}
+	if i.NameContains != nil {
+		predicates = append(predicates, user.NameContains(*i.NameContains))
+	}
+	if i.NameHasPrefix != nil {
+		predicates = append(predicates, user.NameHasPrefix(*i.NameHasPrefix))
+	}
+	if i.NameHasSuffix != nil {
+		predicates = append(predicates, user.NameHasSuffix(*i.NameHasSuffix))
+	}
+	if i.NameEqualFold != nil {
+		predicates = append(predicates, user.NameEqualFold(*i.NameEqualFold))
+	}
+	if i.NameContainsFold != nil {
+		predicates = append(predicates, user.NameContainsFold(*i.NameContainsFold))
+	}
+	if i.Email != nil {
+		predicates = append(predicates, user.EmailEQ(*i.Email))
+	}
+	if i.EmailNEQ != nil {
+		predicates = append(predicates, user.EmailNEQ(*i.EmailNEQ))
+	}
+	if len(i.EmailIn) > 0 {
+		predicates = append(predicates, user.EmailIn(i.EmailIn...))
+	}
+	if len(i.EmailNotIn) > 0 {
+		predicates = append(predicates, user.EmailNotIn(i.EmailNotIn...))
+	}
+	if i.EmailGT != nil {
+		predicates = append(predicates, user.EmailGT(*i.EmailGT))
+	}
+	if i.EmailGTE != nil {
+		predicates = append(predicates, user.EmailGTE(*i.EmailGTE))
+	}
+	if i.EmailLT != nil {
+		predicates = append(predicates, user.EmailLT(*i.EmailLT))
+	}
+	if i.EmailLTE != nil {
+		predicates = append(predicates, user.EmailLTE(*i.EmailLTE))
+	}
+	if i.EmailContains != nil {
+		predicates = append(predicates, user.EmailContains(*i.EmailContains))
+	}
+	if i.EmailHasPrefix != nil {
+		predicates = append(predicates, user.EmailHasPrefix(*i.EmailHasPrefix))
+	}
+	if i.EmailHasSuffix != nil {
+		predicates = append(predicates, user.EmailHasSuffix(*i.EmailHasSuffix))
+	}
+	if i.EmailEqualFold != nil {
+		predicates = append(predicates, user.EmailEqualFold(*i.EmailEqualFold))
+	}
+	if i.EmailContainsFold != nil {
+		predicates = append(predicates, user.EmailContainsFold(*i.EmailContainsFold))
+	}
+	if i.Password != nil {
+		predicates = append(predicates, user.PasswordEQ(*i.Password))
+	}
+	if i.PasswordNEQ != nil {
+		predicates = append(predicates, user.PasswordNEQ(*i.PasswordNEQ))
+	}
+	if len(i.PasswordIn) > 0 {
+		predicates = append(predicates, user.PasswordIn(i.PasswordIn...))
+	}
+	if len(i.PasswordNotIn) > 0 {
+		predicates = append(predicates, user.PasswordNotIn(i.PasswordNotIn...))
+	}
+	if i.PasswordGT != nil {
+		predicates = append(predicates, user.PasswordGT(*i.PasswordGT))
+	}
+	if i.PasswordGTE != nil {
+		predicates = append(predicates, user.PasswordGTE(*i.PasswordGTE))
+	}
+	if i.PasswordLT != nil {
+		predicates = append(predicates, user.PasswordLT(*i.PasswordLT))
+	}
+	if i.PasswordLTE != nil {
+		predicates = append(predicates, user.PasswordLTE(*i.PasswordLTE))
+	}
+	if i.PasswordContains != nil {
+		predicates = append(predicates, user.PasswordContains(*i.PasswordContains))
+	}
+	if i.PasswordHasPrefix != nil {
+		predicates = append(predicates, user.PasswordHasPrefix(*i.PasswordHasPrefix))
+	}
+	if i.PasswordHasSuffix != nil {
+		predicates = append(predicates, user.PasswordHasSuffix(*i.PasswordHasSuffix))
+	}
+	if i.PasswordEqualFold != nil {
+		predicates = append(predicates, user.PasswordEqualFold(*i.PasswordEqualFold))
+	}
+	if i.PasswordContainsFold != nil {
+		predicates = append(predicates, user.PasswordContainsFold(*i.PasswordContainsFold))
+	}
+	if i.Role != nil {
+		predicates = append(predicates, user.RoleEQ(*i.Role))
+	}
+	if i.RoleNEQ != nil {
+		predicates = append(predicates, user.RoleNEQ(*i.RoleNEQ))
+	}
+	if len(i.RoleIn) > 0 {
+		predicates = append(predicates, user.RoleIn(i.RoleIn...))
+	}
+	if len(i.RoleNotIn) > 0 {
+		predicates = append(predicates, user.RoleNotIn(i.RoleNotIn...))
+	}
+	if i.Token != nil {
+		predicates = append(predicates, user.TokenEQ(*i.Token))
+	}
+	if i.TokenNEQ != nil {
+		predicates = append(predicates, user.TokenNEQ(*i.TokenNEQ))
+	}
+	if len(i.TokenIn) > 0 {
+		predicates = append(predicates, user.TokenIn(i.TokenIn...))
+	}
+	if len(i.TokenNotIn) > 0 {
+		predicates = append(predicates, user.TokenNotIn(i.TokenNotIn...))
+	}
+	if i.TokenGT != nil {
+		predicates = append(predicates, user.TokenGT(*i.TokenGT))
+	}
+	if i.TokenGTE != nil {
+		predicates = append(predicates, user.TokenGTE(*i.TokenGTE))
+	}
+	if i.TokenLT != nil {
+		predicates = append(predicates, user.TokenLT(*i.TokenLT))
+	}
+	if i.TokenLTE != nil {
+		predicates = append(predicates, user.TokenLTE(*i.TokenLTE))
+	}
+	if i.TokenContains != nil {
+		predicates = append(predicates, user.TokenContains(*i.TokenContains))
+	}
+	if i.TokenHasPrefix != nil {
+		predicates = append(predicates, user.TokenHasPrefix(*i.TokenHasPrefix))
+	}
+	if i.TokenHasSuffix != nil {
+		predicates = append(predicates, user.TokenHasSuffix(*i.TokenHasSuffix))
+	}
+	if i.TokenIsNil {
+		predicates = append(predicates, user.TokenIsNil())
+	}
+	if i.TokenNotNil {
+		predicates = append(predicates, user.TokenNotNil())
+	}
+	if i.TokenEqualFold != nil {
+		predicates = append(predicates, user.TokenEqualFold(*i.TokenEqualFold))
+	}
+	if i.TokenContainsFold != nil {
+		predicates = append(predicates, user.TokenContainsFold(*i.TokenContainsFold))
+	}
+	if i.TokenExpired != nil {
+		predicates = append(predicates, user.TokenExpiredEQ(*i.TokenExpired))
+	}
+	if i.TokenExpiredNEQ != nil {
+		predicates = append(predicates, user.TokenExpiredNEQ(*i.TokenExpiredNEQ))
+	}
+	if len(i.TokenExpiredIn) > 0 {
+		predicates = append(predicates, user.TokenExpiredIn(i.TokenExpiredIn...))
+	}
+	if len(i.TokenExpiredNotIn) > 0 {
+		predicates = append(predicates, user.TokenExpiredNotIn(i.TokenExpiredNotIn...))
+	}
+	if i.TokenExpiredGT != nil {
+		predicates = append(predicates, user.TokenExpiredGT(*i.TokenExpiredGT))
+	}
+	if i.TokenExpiredGTE != nil {
+		predicates = append(predicates, user.TokenExpiredGTE(*i.TokenExpiredGTE))
+	}
+	if i.TokenExpiredLT != nil {
+		predicates = append(predicates, user.TokenExpiredLT(*i.TokenExpiredLT))
+	}
+	if i.TokenExpiredLTE != nil {
+		predicates = append(predicates, user.TokenExpiredLTE(*i.TokenExpiredLTE))
+	}
+	if i.TokenExpiredIsNil {
+		predicates = append(predicates, user.TokenExpiredIsNil())
+	}
+	if i.TokenExpiredNotNil {
+		predicates = append(predicates, user.TokenExpiredNotNil())
 	}
 
 	switch len(predicates) {

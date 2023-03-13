@@ -264,12 +264,12 @@ func (cq *CommentQuery) Clone() *CommentQuery {
 // Example:
 //
 //	var v []struct {
-//		UpdatedAt time.Time `json:"updated_at,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Comment.Query().
-//		GroupBy(comment.FieldUpdatedAt).
+//		GroupBy(comment.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (cq *CommentQuery) GroupBy(field string, fields ...string) *CommentGroupBy {
@@ -287,11 +287,11 @@ func (cq *CommentQuery) GroupBy(field string, fields ...string) *CommentGroupBy 
 // Example:
 //
 //	var v []struct {
-//		UpdatedAt time.Time `json:"updated_at,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Comment.Query().
-//		Select(comment.FieldUpdatedAt).
+//		Select(comment.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (cq *CommentQuery) Select(fields ...string) *CommentSelect {
 	cq.ctx.Fields = append(cq.ctx.Fields, fields...)

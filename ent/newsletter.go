@@ -22,6 +22,8 @@ type Newsletter struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// The time when the entity was created.
 	CreatedAt time.Time `json:"created_at,omitempty"`
+	// The newsletter's message.
+	Message string `json:"message,omitempty"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -29,6 +31,8 @@ func (*Newsletter) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case newsletter.FieldMessage:
+			values[i] = new(sql.NullString)
 		case newsletter.FieldUpdatedAt, newsletter.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
 		case newsletter.FieldID:
@@ -66,6 +70,12 @@ func (n *Newsletter) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				n.CreatedAt = value.Time
 			}
+		case newsletter.FieldMessage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field message", values[i])
+			} else if value.Valid {
+				n.Message = value.String
+			}
 		}
 	}
 	return nil
@@ -99,6 +109,9 @@ func (n *Newsletter) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(n.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("message=")
+	builder.WriteString(n.Message)
 	builder.WriteByte(')')
 	return builder.String()
 }

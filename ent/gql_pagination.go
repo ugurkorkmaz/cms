@@ -4,9 +4,12 @@ package ent
 
 import (
 	"app/ent/article"
+	"app/ent/category"
 	"app/ent/comment"
-	"app/ent/meta"
+	"app/ent/gallery"
+	"app/ent/metadata"
 	"app/ent/newsletter"
+	"app/ent/tag"
 	"app/ent/user"
 	"context"
 	"encoding/base64"
@@ -444,23 +447,43 @@ func (a *ArticleQuery) Paginate(
 }
 
 var (
-	// ArticleOrderFieldUpdatedAt orders Article by updated_at.
-	ArticleOrderFieldUpdatedAt = &ArticleOrderField{
-		field: article.FieldUpdatedAt,
+	// ArticleOrderFieldTitle orders Article by title.
+	ArticleOrderFieldTitle = &ArticleOrderField{
+		field: article.FieldTitle,
 		toCursor: func(a *Article) Cursor {
 			return Cursor{
 				ID:    a.ID,
-				Value: a.UpdatedAt,
+				Value: a.Title,
 			}
 		},
 	}
-	// ArticleOrderFieldCreatedAt orders Article by created_at.
-	ArticleOrderFieldCreatedAt = &ArticleOrderField{
-		field: article.FieldCreatedAt,
+	// ArticleOrderFieldSlug orders Article by slug.
+	ArticleOrderFieldSlug = &ArticleOrderField{
+		field: article.FieldSlug,
 		toCursor: func(a *Article) Cursor {
 			return Cursor{
 				ID:    a.ID,
-				Value: a.CreatedAt,
+				Value: a.Slug,
+			}
+		},
+	}
+	// ArticleOrderFieldDescription orders Article by description.
+	ArticleOrderFieldDescription = &ArticleOrderField{
+		field: article.FieldDescription,
+		toCursor: func(a *Article) Cursor {
+			return Cursor{
+				ID:    a.ID,
+				Value: a.Description,
+			}
+		},
+	}
+	// ArticleOrderFieldContent orders Article by content.
+	ArticleOrderFieldContent = &ArticleOrderField{
+		field: article.FieldContent,
+		toCursor: func(a *Article) Cursor {
+			return Cursor{
+				ID:    a.ID,
+				Value: a.Content,
 			}
 		},
 	}
@@ -470,10 +493,14 @@ var (
 func (f ArticleOrderField) String() string {
 	var str string
 	switch f.field {
-	case article.FieldUpdatedAt:
-		str = "UPDATED_AT"
-	case article.FieldCreatedAt:
-		str = "CREATED_AT"
+	case article.FieldTitle:
+		str = "TITLE"
+	case article.FieldSlug:
+		str = "SLUG"
+	case article.FieldDescription:
+		str = "DESCRIPTION"
+	case article.FieldContent:
+		str = "CONTENT"
 	}
 	return str
 }
@@ -490,10 +517,14 @@ func (f *ArticleOrderField) UnmarshalGQL(v interface{}) error {
 		return fmt.Errorf("ArticleOrderField %T must be a string", v)
 	}
 	switch str {
-	case "UPDATED_AT":
-		*f = *ArticleOrderFieldUpdatedAt
-	case "CREATED_AT":
-		*f = *ArticleOrderFieldCreatedAt
+	case "TITLE":
+		*f = *ArticleOrderFieldTitle
+	case "SLUG":
+		*f = *ArticleOrderFieldSlug
+	case "DESCRIPTION":
+		*f = *ArticleOrderFieldDescription
+	case "CONTENT":
+		*f = *ArticleOrderFieldContent
 	default:
 		return fmt.Errorf("%s is not a valid ArticleOrderField", str)
 	}
@@ -531,6 +562,308 @@ func (a *Article) ToEdge(order *ArticleOrder) *ArticleEdge {
 	return &ArticleEdge{
 		Node:   a,
 		Cursor: order.Field.toCursor(a),
+	}
+}
+
+// CategoryEdge is the edge representation of Category.
+type CategoryEdge struct {
+	Node   *Category `json:"node"`
+	Cursor Cursor    `json:"cursor"`
+}
+
+// CategoryConnection is the connection containing edges to Category.
+type CategoryConnection struct {
+	Edges      []*CategoryEdge `json:"edges"`
+	PageInfo   PageInfo        `json:"pageInfo"`
+	TotalCount int             `json:"totalCount"`
+}
+
+func (c *CategoryConnection) build(nodes []*Category, pager *categoryPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *Category
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Category {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Category {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*CategoryEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &CategoryEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// CategoryPaginateOption enables pagination customization.
+type CategoryPaginateOption func(*categoryPager) error
+
+// WithCategoryOrder configures pagination ordering.
+func WithCategoryOrder(order *CategoryOrder) CategoryPaginateOption {
+	if order == nil {
+		order = DefaultCategoryOrder
+	}
+	o := *order
+	return func(pager *categoryPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultCategoryOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithCategoryFilter configures pagination filter.
+func WithCategoryFilter(filter func(*CategoryQuery) (*CategoryQuery, error)) CategoryPaginateOption {
+	return func(pager *categoryPager) error {
+		if filter == nil {
+			return errors.New("CategoryQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type categoryPager struct {
+	order  *CategoryOrder
+	filter func(*CategoryQuery) (*CategoryQuery, error)
+}
+
+func newCategoryPager(opts []CategoryPaginateOption) (*categoryPager, error) {
+	pager := &categoryPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultCategoryOrder
+	}
+	return pager, nil
+}
+
+func (p *categoryPager) applyFilter(query *CategoryQuery) (*CategoryQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *categoryPager) toCursor(c *Category) Cursor {
+	return p.order.Field.toCursor(c)
+}
+
+func (p *categoryPager) applyCursors(query *CategoryQuery, after, before *Cursor) *CategoryQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultCategoryOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *categoryPager) applyOrder(query *CategoryQuery, reverse bool) *CategoryQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultCategoryOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultCategoryOrder.Field.field))
+	}
+	return query
+}
+
+func (p *categoryPager) orderExpr(reverse bool) sql.Querier {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.field).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultCategoryOrder.Field {
+			b.Comma().Ident(DefaultCategoryOrder.Field.field).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Category.
+func (c *CategoryQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...CategoryPaginateOption,
+) (*CategoryConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newCategoryPager(opts)
+	if err != nil {
+		return nil, err
+	}
+	if c, err = pager.applyFilter(c); err != nil {
+		return nil, err
+	}
+	conn := &CategoryConnection{Edges: []*CategoryEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = c.Clone().Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+
+	c = pager.applyCursors(c, after, before)
+	c = pager.applyOrder(c, last != nil)
+	if limit := paginateLimit(first, last); limit != 0 {
+		c.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := c.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+
+	nodes, err := c.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+var (
+	// CategoryOrderFieldCreatedAt orders Category by created_at.
+	CategoryOrderFieldCreatedAt = &CategoryOrderField{
+		field: category.FieldCreatedAt,
+		toCursor: func(c *Category) Cursor {
+			return Cursor{
+				ID:    c.ID,
+				Value: c.CreatedAt,
+			}
+		},
+	}
+	// CategoryOrderFieldUpdatedAt orders Category by updated_at.
+	CategoryOrderFieldUpdatedAt = &CategoryOrderField{
+		field: category.FieldUpdatedAt,
+		toCursor: func(c *Category) Cursor {
+			return Cursor{
+				ID:    c.ID,
+				Value: c.UpdatedAt,
+			}
+		},
+	}
+	// CategoryOrderFieldName orders Category by name.
+	CategoryOrderFieldName = &CategoryOrderField{
+		field: category.FieldName,
+		toCursor: func(c *Category) Cursor {
+			return Cursor{
+				ID:    c.ID,
+				Value: c.Name,
+			}
+		},
+	}
+)
+
+// String implement fmt.Stringer interface.
+func (f CategoryOrderField) String() string {
+	var str string
+	switch f.field {
+	case category.FieldCreatedAt:
+		str = "CREATED_AT"
+	case category.FieldUpdatedAt:
+		str = "UPDATED_AT"
+	case category.FieldName:
+		str = "NAME"
+	}
+	return str
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (f CategoryOrderField) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(f.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (f *CategoryOrderField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("CategoryOrderField %T must be a string", v)
+	}
+	switch str {
+	case "CREATED_AT":
+		*f = *CategoryOrderFieldCreatedAt
+	case "UPDATED_AT":
+		*f = *CategoryOrderFieldUpdatedAt
+	case "NAME":
+		*f = *CategoryOrderFieldName
+	default:
+		return fmt.Errorf("%s is not a valid CategoryOrderField", str)
+	}
+	return nil
+}
+
+// CategoryOrderField defines the ordering field of Category.
+type CategoryOrderField struct {
+	field    string
+	toCursor func(*Category) Cursor
+}
+
+// CategoryOrder defines the ordering of Category.
+type CategoryOrder struct {
+	Direction OrderDirection      `json:"direction"`
+	Field     *CategoryOrderField `json:"field"`
+}
+
+// DefaultCategoryOrder is the default ordering of Category.
+var DefaultCategoryOrder = &CategoryOrder{
+	Direction: OrderDirectionAsc,
+	Field: &CategoryOrderField{
+		field: category.FieldID,
+		toCursor: func(c *Category) Cursor {
+			return Cursor{ID: c.ID}
+		},
+	},
+}
+
+// ToEdge converts Category into CategoryEdge.
+func (c *Category) ToEdge(order *CategoryOrder) *CategoryEdge {
+	if order == nil {
+		order = DefaultCategoryOrder
+	}
+	return &CategoryEdge{
+		Node:   c,
+		Cursor: order.Field.toCursor(c),
 	}
 }
 
@@ -732,16 +1065,6 @@ func (c *CommentQuery) Paginate(
 }
 
 var (
-	// CommentOrderFieldUpdatedAt orders Comment by updated_at.
-	CommentOrderFieldUpdatedAt = &CommentOrderField{
-		field: comment.FieldUpdatedAt,
-		toCursor: func(c *Comment) Cursor {
-			return Cursor{
-				ID:    c.ID,
-				Value: c.UpdatedAt,
-			}
-		},
-	}
 	// CommentOrderFieldCreatedAt orders Comment by created_at.
 	CommentOrderFieldCreatedAt = &CommentOrderField{
 		field: comment.FieldCreatedAt,
@@ -752,16 +1075,26 @@ var (
 			}
 		},
 	}
+	// CommentOrderFieldContent orders Comment by content.
+	CommentOrderFieldContent = &CommentOrderField{
+		field: comment.FieldContent,
+		toCursor: func(c *Comment) Cursor {
+			return Cursor{
+				ID:    c.ID,
+				Value: c.Content,
+			}
+		},
+	}
 )
 
 // String implement fmt.Stringer interface.
 func (f CommentOrderField) String() string {
 	var str string
 	switch f.field {
-	case comment.FieldUpdatedAt:
-		str = "UPDATED_AT"
 	case comment.FieldCreatedAt:
 		str = "CREATED_AT"
+	case comment.FieldContent:
+		str = "content"
 	}
 	return str
 }
@@ -778,10 +1111,10 @@ func (f *CommentOrderField) UnmarshalGQL(v interface{}) error {
 		return fmt.Errorf("CommentOrderField %T must be a string", v)
 	}
 	switch str {
-	case "UPDATED_AT":
-		*f = *CommentOrderFieldUpdatedAt
 	case "CREATED_AT":
 		*f = *CommentOrderFieldCreatedAt
+	case "content":
+		*f = *CommentOrderFieldContent
 	default:
 		return fmt.Errorf("%s is not a valid CommentOrderField", str)
 	}
@@ -822,20 +1155,20 @@ func (c *Comment) ToEdge(order *CommentOrder) *CommentEdge {
 	}
 }
 
-// MetaEdge is the edge representation of Meta.
-type MetaEdge struct {
-	Node   *Meta  `json:"node"`
-	Cursor Cursor `json:"cursor"`
+// GalleryEdge is the edge representation of Gallery.
+type GalleryEdge struct {
+	Node   *Gallery `json:"node"`
+	Cursor Cursor   `json:"cursor"`
 }
 
-// MetaConnection is the connection containing edges to Meta.
-type MetaConnection struct {
-	Edges      []*MetaEdge `json:"edges"`
-	PageInfo   PageInfo    `json:"pageInfo"`
-	TotalCount int         `json:"totalCount"`
+// GalleryConnection is the connection containing edges to Gallery.
+type GalleryConnection struct {
+	Edges      []*GalleryEdge `json:"edges"`
+	PageInfo   PageInfo       `json:"pageInfo"`
+	TotalCount int            `json:"totalCount"`
 }
 
-func (c *MetaConnection) build(nodes []*Meta, pager *metaPager, after *Cursor, first *int, before *Cursor, last *int) {
+func (c *GalleryConnection) build(nodes []*Gallery, pager *galleryPager, after *Cursor, first *int, before *Cursor, last *int) {
 	c.PageInfo.HasNextPage = before != nil
 	c.PageInfo.HasPreviousPage = after != nil
 	if first != nil && *first+1 == len(nodes) {
@@ -845,21 +1178,21 @@ func (c *MetaConnection) build(nodes []*Meta, pager *metaPager, after *Cursor, f
 		c.PageInfo.HasPreviousPage = true
 		nodes = nodes[:len(nodes)-1]
 	}
-	var nodeAt func(int) *Meta
+	var nodeAt func(int) *Gallery
 	if last != nil {
 		n := len(nodes) - 1
-		nodeAt = func(i int) *Meta {
+		nodeAt = func(i int) *Gallery {
 			return nodes[n-i]
 		}
 	} else {
-		nodeAt = func(i int) *Meta {
+		nodeAt = func(i int) *Gallery {
 			return nodes[i]
 		}
 	}
-	c.Edges = make([]*MetaEdge, len(nodes))
+	c.Edges = make([]*GalleryEdge, len(nodes))
 	for i := range nodes {
 		node := nodeAt(i)
-		c.Edges[i] = &MetaEdge{
+		c.Edges[i] = &GalleryEdge{
 			Node:   node,
 			Cursor: pager.toCursor(node),
 		}
@@ -873,118 +1206,420 @@ func (c *MetaConnection) build(nodes []*Meta, pager *metaPager, after *Cursor, f
 	}
 }
 
-// MetaPaginateOption enables pagination customization.
-type MetaPaginateOption func(*metaPager) error
+// GalleryPaginateOption enables pagination customization.
+type GalleryPaginateOption func(*galleryPager) error
 
-// WithMetaOrder configures pagination ordering.
-func WithMetaOrder(order *MetaOrder) MetaPaginateOption {
+// WithGalleryOrder configures pagination ordering.
+func WithGalleryOrder(order *GalleryOrder) GalleryPaginateOption {
 	if order == nil {
-		order = DefaultMetaOrder
+		order = DefaultGalleryOrder
 	}
 	o := *order
-	return func(pager *metaPager) error {
+	return func(pager *galleryPager) error {
 		if err := o.Direction.Validate(); err != nil {
 			return err
 		}
 		if o.Field == nil {
-			o.Field = DefaultMetaOrder.Field
+			o.Field = DefaultGalleryOrder.Field
 		}
 		pager.order = &o
 		return nil
 	}
 }
 
-// WithMetaFilter configures pagination filter.
-func WithMetaFilter(filter func(*MetaQuery) (*MetaQuery, error)) MetaPaginateOption {
-	return func(pager *metaPager) error {
+// WithGalleryFilter configures pagination filter.
+func WithGalleryFilter(filter func(*GalleryQuery) (*GalleryQuery, error)) GalleryPaginateOption {
+	return func(pager *galleryPager) error {
 		if filter == nil {
-			return errors.New("MetaQuery filter cannot be nil")
+			return errors.New("GalleryQuery filter cannot be nil")
 		}
 		pager.filter = filter
 		return nil
 	}
 }
 
-type metaPager struct {
-	order  *MetaOrder
-	filter func(*MetaQuery) (*MetaQuery, error)
+type galleryPager struct {
+	order  *GalleryOrder
+	filter func(*GalleryQuery) (*GalleryQuery, error)
 }
 
-func newMetaPager(opts []MetaPaginateOption) (*metaPager, error) {
-	pager := &metaPager{}
+func newGalleryPager(opts []GalleryPaginateOption) (*galleryPager, error) {
+	pager := &galleryPager{}
 	for _, opt := range opts {
 		if err := opt(pager); err != nil {
 			return nil, err
 		}
 	}
 	if pager.order == nil {
-		pager.order = DefaultMetaOrder
+		pager.order = DefaultGalleryOrder
 	}
 	return pager, nil
 }
 
-func (p *metaPager) applyFilter(query *MetaQuery) (*MetaQuery, error) {
+func (p *galleryPager) applyFilter(query *GalleryQuery) (*GalleryQuery, error) {
 	if p.filter != nil {
 		return p.filter(query)
 	}
 	return query, nil
 }
 
-func (p *metaPager) toCursor(m *Meta) Cursor {
-	return p.order.Field.toCursor(m)
+func (p *galleryPager) toCursor(ga *Gallery) Cursor {
+	return p.order.Field.toCursor(ga)
 }
 
-func (p *metaPager) applyCursors(query *MetaQuery, after, before *Cursor) *MetaQuery {
+func (p *galleryPager) applyCursors(query *GalleryQuery, after, before *Cursor) *GalleryQuery {
 	for _, predicate := range cursorsToPredicates(
 		p.order.Direction, after, before,
-		p.order.Field.field, DefaultMetaOrder.Field.field,
+		p.order.Field.field, DefaultGalleryOrder.Field.field,
 	) {
 		query = query.Where(predicate)
 	}
 	return query
 }
 
-func (p *metaPager) applyOrder(query *MetaQuery, reverse bool) *MetaQuery {
+func (p *galleryPager) applyOrder(query *GalleryQuery, reverse bool) *GalleryQuery {
 	direction := p.order.Direction
 	if reverse {
 		direction = direction.reverse()
 	}
 	query = query.Order(direction.orderFunc(p.order.Field.field))
-	if p.order.Field != DefaultMetaOrder.Field {
-		query = query.Order(direction.orderFunc(DefaultMetaOrder.Field.field))
+	if p.order.Field != DefaultGalleryOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultGalleryOrder.Field.field))
 	}
 	return query
 }
 
-func (p *metaPager) orderExpr(reverse bool) sql.Querier {
+func (p *galleryPager) orderExpr(reverse bool) sql.Querier {
 	direction := p.order.Direction
 	if reverse {
 		direction = direction.reverse()
 	}
 	return sql.ExprFunc(func(b *sql.Builder) {
 		b.Ident(p.order.Field.field).Pad().WriteString(string(direction))
-		if p.order.Field != DefaultMetaOrder.Field {
-			b.Comma().Ident(DefaultMetaOrder.Field.field).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultGalleryOrder.Field {
+			b.Comma().Ident(DefaultGalleryOrder.Field.field).Pad().WriteString(string(direction))
 		}
 	})
 }
 
-// Paginate executes the query and returns a relay based cursor connection to Meta.
-func (m *MetaQuery) Paginate(
+// Paginate executes the query and returns a relay based cursor connection to Gallery.
+func (ga *GalleryQuery) Paginate(
 	ctx context.Context, after *Cursor, first *int,
-	before *Cursor, last *int, opts ...MetaPaginateOption,
-) (*MetaConnection, error) {
+	before *Cursor, last *int, opts ...GalleryPaginateOption,
+) (*GalleryConnection, error) {
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
-	pager, err := newMetaPager(opts)
+	pager, err := newGalleryPager(opts)
+	if err != nil {
+		return nil, err
+	}
+	if ga, err = pager.applyFilter(ga); err != nil {
+		return nil, err
+	}
+	conn := &GalleryConnection{Edges: []*GalleryEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = ga.Clone().Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+
+	ga = pager.applyCursors(ga, after, before)
+	ga = pager.applyOrder(ga, last != nil)
+	if limit := paginateLimit(first, last); limit != 0 {
+		ga.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := ga.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+
+	nodes, err := ga.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+var (
+	// GalleryOrderFieldCreatedAt orders Gallery by created_at.
+	GalleryOrderFieldCreatedAt = &GalleryOrderField{
+		field: gallery.FieldCreatedAt,
+		toCursor: func(ga *Gallery) Cursor {
+			return Cursor{
+				ID:    ga.ID,
+				Value: ga.CreatedAt,
+			}
+		},
+	}
+	// GalleryOrderFieldUpdatedAt orders Gallery by updated_at.
+	GalleryOrderFieldUpdatedAt = &GalleryOrderField{
+		field: gallery.FieldUpdatedAt,
+		toCursor: func(ga *Gallery) Cursor {
+			return Cursor{
+				ID:    ga.ID,
+				Value: ga.UpdatedAt,
+			}
+		},
+	}
+	// GalleryOrderFieldName orders Gallery by name.
+	GalleryOrderFieldName = &GalleryOrderField{
+		field: gallery.FieldName,
+		toCursor: func(ga *Gallery) Cursor {
+			return Cursor{
+				ID:    ga.ID,
+				Value: ga.Name,
+			}
+		},
+	}
+)
+
+// String implement fmt.Stringer interface.
+func (f GalleryOrderField) String() string {
+	var str string
+	switch f.field {
+	case gallery.FieldCreatedAt:
+		str = "CREATED_AT"
+	case gallery.FieldUpdatedAt:
+		str = "UPDATED_AT"
+	case gallery.FieldName:
+		str = "NAME"
+	}
+	return str
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (f GalleryOrderField) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(f.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (f *GalleryOrderField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("GalleryOrderField %T must be a string", v)
+	}
+	switch str {
+	case "CREATED_AT":
+		*f = *GalleryOrderFieldCreatedAt
+	case "UPDATED_AT":
+		*f = *GalleryOrderFieldUpdatedAt
+	case "NAME":
+		*f = *GalleryOrderFieldName
+	default:
+		return fmt.Errorf("%s is not a valid GalleryOrderField", str)
+	}
+	return nil
+}
+
+// GalleryOrderField defines the ordering field of Gallery.
+type GalleryOrderField struct {
+	field    string
+	toCursor func(*Gallery) Cursor
+}
+
+// GalleryOrder defines the ordering of Gallery.
+type GalleryOrder struct {
+	Direction OrderDirection     `json:"direction"`
+	Field     *GalleryOrderField `json:"field"`
+}
+
+// DefaultGalleryOrder is the default ordering of Gallery.
+var DefaultGalleryOrder = &GalleryOrder{
+	Direction: OrderDirectionAsc,
+	Field: &GalleryOrderField{
+		field: gallery.FieldID,
+		toCursor: func(ga *Gallery) Cursor {
+			return Cursor{ID: ga.ID}
+		},
+	},
+}
+
+// ToEdge converts Gallery into GalleryEdge.
+func (ga *Gallery) ToEdge(order *GalleryOrder) *GalleryEdge {
+	if order == nil {
+		order = DefaultGalleryOrder
+	}
+	return &GalleryEdge{
+		Node:   ga,
+		Cursor: order.Field.toCursor(ga),
+	}
+}
+
+// MetadataEdge is the edge representation of Metadata.
+type MetadataEdge struct {
+	Node   *Metadata `json:"node"`
+	Cursor Cursor    `json:"cursor"`
+}
+
+// MetadataConnection is the connection containing edges to Metadata.
+type MetadataConnection struct {
+	Edges      []*MetadataEdge `json:"edges"`
+	PageInfo   PageInfo        `json:"pageInfo"`
+	TotalCount int             `json:"totalCount"`
+}
+
+func (c *MetadataConnection) build(nodes []*Metadata, pager *metadataPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *Metadata
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Metadata {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Metadata {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*MetadataEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &MetadataEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// MetadataPaginateOption enables pagination customization.
+type MetadataPaginateOption func(*metadataPager) error
+
+// WithMetadataOrder configures pagination ordering.
+func WithMetadataOrder(order *MetadataOrder) MetadataPaginateOption {
+	if order == nil {
+		order = DefaultMetadataOrder
+	}
+	o := *order
+	return func(pager *metadataPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultMetadataOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithMetadataFilter configures pagination filter.
+func WithMetadataFilter(filter func(*MetadataQuery) (*MetadataQuery, error)) MetadataPaginateOption {
+	return func(pager *metadataPager) error {
+		if filter == nil {
+			return errors.New("MetadataQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type metadataPager struct {
+	order  *MetadataOrder
+	filter func(*MetadataQuery) (*MetadataQuery, error)
+}
+
+func newMetadataPager(opts []MetadataPaginateOption) (*metadataPager, error) {
+	pager := &metadataPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultMetadataOrder
+	}
+	return pager, nil
+}
+
+func (p *metadataPager) applyFilter(query *MetadataQuery) (*MetadataQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *metadataPager) toCursor(m *Metadata) Cursor {
+	return p.order.Field.toCursor(m)
+}
+
+func (p *metadataPager) applyCursors(query *MetadataQuery, after, before *Cursor) *MetadataQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultMetadataOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *metadataPager) applyOrder(query *MetadataQuery, reverse bool) *MetadataQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultMetadataOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultMetadataOrder.Field.field))
+	}
+	return query
+}
+
+func (p *metadataPager) orderExpr(reverse bool) sql.Querier {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.field).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultMetadataOrder.Field {
+			b.Comma().Ident(DefaultMetadataOrder.Field.field).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Metadata.
+func (m *MetadataQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...MetadataPaginateOption,
+) (*MetadataConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newMetadataPager(opts)
 	if err != nil {
 		return nil, err
 	}
 	if m, err = pager.applyFilter(m); err != nil {
 		return nil, err
 	}
-	conn := &MetaConnection{Edges: []*MetaEdge{}}
+	conn := &MetadataConnection{Edges: []*MetadataEdge{}}
 	ignoredEdges := !hasCollectedField(ctx, edgesField)
 	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
 		hasPagination := after != nil || first != nil || before != nil || last != nil
@@ -1020,91 +1655,105 @@ func (m *MetaQuery) Paginate(
 }
 
 var (
-	// MetaOrderFieldUpdatedAt orders Meta by updated_at.
-	MetaOrderFieldUpdatedAt = &MetaOrderField{
-		field: meta.FieldUpdatedAt,
-		toCursor: func(m *Meta) Cursor {
+	// MetadataOrderFieldUpdatedAt orders Metadata by updated_at.
+	MetadataOrderFieldUpdatedAt = &MetadataOrderField{
+		field: metadata.FieldUpdatedAt,
+		toCursor: func(m *Metadata) Cursor {
 			return Cursor{
 				ID:    m.ID,
 				Value: m.UpdatedAt,
 			}
 		},
 	}
-	// MetaOrderFieldCreatedAt orders Meta by created_at.
-	MetaOrderFieldCreatedAt = &MetaOrderField{
-		field: meta.FieldCreatedAt,
-		toCursor: func(m *Meta) Cursor {
+	// MetadataOrderFieldCreatedAt orders Metadata by created_at.
+	MetadataOrderFieldCreatedAt = &MetadataOrderField{
+		field: metadata.FieldCreatedAt,
+		toCursor: func(m *Metadata) Cursor {
 			return Cursor{
 				ID:    m.ID,
 				Value: m.CreatedAt,
 			}
 		},
 	}
+	// MetadataOrderFieldTitle orders Metadata by title.
+	MetadataOrderFieldTitle = &MetadataOrderField{
+		field: metadata.FieldTitle,
+		toCursor: func(m *Metadata) Cursor {
+			return Cursor{
+				ID:    m.ID,
+				Value: m.Title,
+			}
+		},
+	}
 )
 
 // String implement fmt.Stringer interface.
-func (f MetaOrderField) String() string {
+func (f MetadataOrderField) String() string {
 	var str string
 	switch f.field {
-	case meta.FieldUpdatedAt:
+	case metadata.FieldUpdatedAt:
 		str = "UPDATED_AT"
-	case meta.FieldCreatedAt:
+	case metadata.FieldCreatedAt:
 		str = "CREATED_AT"
+	case metadata.FieldTitle:
+		str = "TITLE"
 	}
 	return str
 }
 
 // MarshalGQL implements graphql.Marshaler interface.
-func (f MetaOrderField) MarshalGQL(w io.Writer) {
+func (f MetadataOrderField) MarshalGQL(w io.Writer) {
 	io.WriteString(w, strconv.Quote(f.String()))
 }
 
 // UnmarshalGQL implements graphql.Unmarshaler interface.
-func (f *MetaOrderField) UnmarshalGQL(v interface{}) error {
+func (f *MetadataOrderField) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("MetaOrderField %T must be a string", v)
+		return fmt.Errorf("MetadataOrderField %T must be a string", v)
 	}
 	switch str {
 	case "UPDATED_AT":
-		*f = *MetaOrderFieldUpdatedAt
+		*f = *MetadataOrderFieldUpdatedAt
 	case "CREATED_AT":
-		*f = *MetaOrderFieldCreatedAt
+		*f = *MetadataOrderFieldCreatedAt
+	case "TITLE":
+		*f = *MetadataOrderFieldTitle
 	default:
-		return fmt.Errorf("%s is not a valid MetaOrderField", str)
+		return fmt.Errorf("%s is not a valid MetadataOrderField", str)
 	}
 	return nil
 }
 
-// MetaOrderField defines the ordering field of Meta.
-type MetaOrderField struct {
+// MetadataOrderField defines the ordering field of Metadata.
+type MetadataOrderField struct {
 	field    string
-	toCursor func(*Meta) Cursor
+	toCursor func(*Metadata) Cursor
 }
 
-// MetaOrder defines the ordering of Meta.
-type MetaOrder struct {
-	Direction OrderDirection  `json:"direction"`
-	Field     *MetaOrderField `json:"field"`
+// MetadataOrder defines the ordering of Metadata.
+type MetadataOrder struct {
+	Direction OrderDirection      `json:"direction"`
+	Field     *MetadataOrderField `json:"field"`
 }
 
-// DefaultMetaOrder is the default ordering of Meta.
-var DefaultMetaOrder = &MetaOrder{
+// DefaultMetadataOrder is the default ordering of Metadata.
+var DefaultMetadataOrder = &MetadataOrder{
 	Direction: OrderDirectionAsc,
-	Field: &MetaOrderField{
-		field: meta.FieldID,
-		toCursor: func(m *Meta) Cursor {
+	Field: &MetadataOrderField{
+		field: metadata.FieldID,
+		toCursor: func(m *Metadata) Cursor {
 			return Cursor{ID: m.ID}
 		},
 	},
 }
 
-// ToEdge converts Meta into MetaEdge.
-func (m *Meta) ToEdge(order *MetaOrder) *MetaEdge {
+// ToEdge converts Metadata into MetadataEdge.
+func (m *Metadata) ToEdge(order *MetadataOrder) *MetadataEdge {
 	if order == nil {
-		order = DefaultMetaOrder
+		order = DefaultMetadataOrder
 	}
-	return &MetaEdge{
+	return &MetadataEdge{
 		Node:   m,
 		Cursor: order.Field.toCursor(m),
 	}
@@ -1328,6 +1977,16 @@ var (
 			}
 		},
 	}
+	// NewsletterOrderFieldMessage orders Newsletter by message.
+	NewsletterOrderFieldMessage = &NewsletterOrderField{
+		field: newsletter.FieldMessage,
+		toCursor: func(n *Newsletter) Cursor {
+			return Cursor{
+				ID:    n.ID,
+				Value: n.Message,
+			}
+		},
+	}
 )
 
 // String implement fmt.Stringer interface.
@@ -1338,6 +1997,8 @@ func (f NewsletterOrderField) String() string {
 		str = "UPDATED_AT"
 	case newsletter.FieldCreatedAt:
 		str = "CREATED_AT"
+	case newsletter.FieldMessage:
+		str = "MESSAGE"
 	}
 	return str
 }
@@ -1358,6 +2019,8 @@ func (f *NewsletterOrderField) UnmarshalGQL(v interface{}) error {
 		*f = *NewsletterOrderFieldUpdatedAt
 	case "CREATED_AT":
 		*f = *NewsletterOrderFieldCreatedAt
+	case "MESSAGE":
+		*f = *NewsletterOrderFieldMessage
 	default:
 		return fmt.Errorf("%s is not a valid NewsletterOrderField", str)
 	}
@@ -1395,6 +2058,308 @@ func (n *Newsletter) ToEdge(order *NewsletterOrder) *NewsletterEdge {
 	return &NewsletterEdge{
 		Node:   n,
 		Cursor: order.Field.toCursor(n),
+	}
+}
+
+// TagEdge is the edge representation of Tag.
+type TagEdge struct {
+	Node   *Tag   `json:"node"`
+	Cursor Cursor `json:"cursor"`
+}
+
+// TagConnection is the connection containing edges to Tag.
+type TagConnection struct {
+	Edges      []*TagEdge `json:"edges"`
+	PageInfo   PageInfo   `json:"pageInfo"`
+	TotalCount int        `json:"totalCount"`
+}
+
+func (c *TagConnection) build(nodes []*Tag, pager *tagPager, after *Cursor, first *int, before *Cursor, last *int) {
+	c.PageInfo.HasNextPage = before != nil
+	c.PageInfo.HasPreviousPage = after != nil
+	if first != nil && *first+1 == len(nodes) {
+		c.PageInfo.HasNextPage = true
+		nodes = nodes[:len(nodes)-1]
+	} else if last != nil && *last+1 == len(nodes) {
+		c.PageInfo.HasPreviousPage = true
+		nodes = nodes[:len(nodes)-1]
+	}
+	var nodeAt func(int) *Tag
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Tag {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Tag {
+			return nodes[i]
+		}
+	}
+	c.Edges = make([]*TagEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		c.Edges[i] = &TagEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+	if l := len(c.Edges); l > 0 {
+		c.PageInfo.StartCursor = &c.Edges[0].Cursor
+		c.PageInfo.EndCursor = &c.Edges[l-1].Cursor
+	}
+	if c.TotalCount == 0 {
+		c.TotalCount = len(nodes)
+	}
+}
+
+// TagPaginateOption enables pagination customization.
+type TagPaginateOption func(*tagPager) error
+
+// WithTagOrder configures pagination ordering.
+func WithTagOrder(order *TagOrder) TagPaginateOption {
+	if order == nil {
+		order = DefaultTagOrder
+	}
+	o := *order
+	return func(pager *tagPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultTagOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithTagFilter configures pagination filter.
+func WithTagFilter(filter func(*TagQuery) (*TagQuery, error)) TagPaginateOption {
+	return func(pager *tagPager) error {
+		if filter == nil {
+			return errors.New("TagQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type tagPager struct {
+	order  *TagOrder
+	filter func(*TagQuery) (*TagQuery, error)
+}
+
+func newTagPager(opts []TagPaginateOption) (*tagPager, error) {
+	pager := &tagPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultTagOrder
+	}
+	return pager, nil
+}
+
+func (p *tagPager) applyFilter(query *TagQuery) (*TagQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *tagPager) toCursor(t *Tag) Cursor {
+	return p.order.Field.toCursor(t)
+}
+
+func (p *tagPager) applyCursors(query *TagQuery, after, before *Cursor) *TagQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultTagOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *tagPager) applyOrder(query *TagQuery, reverse bool) *TagQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultTagOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultTagOrder.Field.field))
+	}
+	return query
+}
+
+func (p *tagPager) orderExpr(reverse bool) sql.Querier {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	return sql.ExprFunc(func(b *sql.Builder) {
+		b.Ident(p.order.Field.field).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultTagOrder.Field {
+			b.Comma().Ident(DefaultTagOrder.Field.field).Pad().WriteString(string(direction))
+		}
+	})
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Tag.
+func (t *TagQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...TagPaginateOption,
+) (*TagConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newTagPager(opts)
+	if err != nil {
+		return nil, err
+	}
+	if t, err = pager.applyFilter(t); err != nil {
+		return nil, err
+	}
+	conn := &TagConnection{Edges: []*TagEdge{}}
+	ignoredEdges := !hasCollectedField(ctx, edgesField)
+	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
+		hasPagination := after != nil || first != nil || before != nil || last != nil
+		if hasPagination || ignoredEdges {
+			if conn.TotalCount, err = t.Clone().Count(ctx); err != nil {
+				return nil, err
+			}
+			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
+			conn.PageInfo.HasPreviousPage = last != nil && conn.TotalCount > 0
+		}
+	}
+	if ignoredEdges || (first != nil && *first == 0) || (last != nil && *last == 0) {
+		return conn, nil
+	}
+
+	t = pager.applyCursors(t, after, before)
+	t = pager.applyOrder(t, last != nil)
+	if limit := paginateLimit(first, last); limit != 0 {
+		t.Limit(limit)
+	}
+	if field := collectedField(ctx, edgesField, nodeField); field != nil {
+		if err := t.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+			return nil, err
+		}
+	}
+
+	nodes, err := t.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn.build(nodes, pager, after, first, before, last)
+	return conn, nil
+}
+
+var (
+	// TagOrderFieldCreatedAt orders Tag by created_at.
+	TagOrderFieldCreatedAt = &TagOrderField{
+		field: tag.FieldCreatedAt,
+		toCursor: func(t *Tag) Cursor {
+			return Cursor{
+				ID:    t.ID,
+				Value: t.CreatedAt,
+			}
+		},
+	}
+	// TagOrderFieldUpdatedAt orders Tag by updated_at.
+	TagOrderFieldUpdatedAt = &TagOrderField{
+		field: tag.FieldUpdatedAt,
+		toCursor: func(t *Tag) Cursor {
+			return Cursor{
+				ID:    t.ID,
+				Value: t.UpdatedAt,
+			}
+		},
+	}
+	// TagOrderFieldName orders Tag by name.
+	TagOrderFieldName = &TagOrderField{
+		field: tag.FieldName,
+		toCursor: func(t *Tag) Cursor {
+			return Cursor{
+				ID:    t.ID,
+				Value: t.Name,
+			}
+		},
+	}
+)
+
+// String implement fmt.Stringer interface.
+func (f TagOrderField) String() string {
+	var str string
+	switch f.field {
+	case tag.FieldCreatedAt:
+		str = "CREATED_AT"
+	case tag.FieldUpdatedAt:
+		str = "UPDATED_AT"
+	case tag.FieldName:
+		str = "NAME"
+	}
+	return str
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (f TagOrderField) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(f.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (f *TagOrderField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("TagOrderField %T must be a string", v)
+	}
+	switch str {
+	case "CREATED_AT":
+		*f = *TagOrderFieldCreatedAt
+	case "UPDATED_AT":
+		*f = *TagOrderFieldUpdatedAt
+	case "NAME":
+		*f = *TagOrderFieldName
+	default:
+		return fmt.Errorf("%s is not a valid TagOrderField", str)
+	}
+	return nil
+}
+
+// TagOrderField defines the ordering field of Tag.
+type TagOrderField struct {
+	field    string
+	toCursor func(*Tag) Cursor
+}
+
+// TagOrder defines the ordering of Tag.
+type TagOrder struct {
+	Direction OrderDirection `json:"direction"`
+	Field     *TagOrderField `json:"field"`
+}
+
+// DefaultTagOrder is the default ordering of Tag.
+var DefaultTagOrder = &TagOrder{
+	Direction: OrderDirectionAsc,
+	Field: &TagOrderField{
+		field: tag.FieldID,
+		toCursor: func(t *Tag) Cursor {
+			return Cursor{ID: t.ID}
+		},
+	},
+}
+
+// ToEdge converts Tag into TagEdge.
+func (t *Tag) ToEdge(order *TagOrder) *TagEdge {
+	if order == nil {
+		order = DefaultTagOrder
+	}
+	return &TagEdge{
+		Node:   t,
+		Cursor: order.Field.toCursor(t),
 	}
 }
 
