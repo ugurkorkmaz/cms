@@ -4,4 +4,4 @@
 /.vscode
 app
 main
-.sqlite
+/.sqlite
